@@ -15,12 +15,22 @@ public abstract class Subject extends JPanel {
 	final static int ToDownRight = 16;
 	final static int ToRight = 17;
 	final static int ToUpRight = 18;
-	private String name,feed;
-	private int id,speed;
+	
+	private static int searchWidth = 600;
+	private static int searchHeight = 200;
+
+	private int id;
 	private int lastDirection = 13;
 	private int lastHeadDirection = 13;
+	
+	protected String name;
+	protected String feed;
+	protected int speed = 1;
+	protected Dimension size;
+	
 	protected boolean isMove,isEating;
 	protected boolean isReflected = false;
+	protected boolean isDetected = false;
 	private Point location;
 	protected Runnable moveMotionThread;
 	protected Runnable eatingMotionThread;
@@ -28,7 +38,15 @@ public abstract class Subject extends JPanel {
 		this.name = name;
 		this.feed = feed;
 		this.speed = speed;
+		this.size = size;
+		this.setBackground(null);
+		this.setOpaque(false);
+		this.setVisible(true);
 		this.setSize(size);
+	}
+	Point getCenterPoint() {
+		Point l = this.getLocation();
+		return new Point((int)l.getX()+this.size.width/2,(int)l.getY()+this.size.height/2);
 	}
 	void move() {
 		if (this.isMove || this.isEating) {
@@ -172,6 +190,67 @@ public abstract class Subject extends JPanel {
 				}
 			}
 		}
+		
+		boolean searchVertical(int d) {
+			Point treeP = new Point (800+75,600+100);
+			Point center = sub.getCenterPoint();
+			if (treeP.getY() >= (center.getY() - (searchWidth/2)) && treeP.getY() <= (center.getY() + (searchWidth/2))) {
+				if (d>0) {
+					if(treeP.getX() >= center.getX() && treeP.getX() <= center.getX() + searchHeight) {
+						return true;
+					}
+				} else {
+					if(treeP.getX() <= center.getX() && treeP.getX() >= center.getX() - searchHeight) {
+						return true;
+					}
+				}
+			}
+			return false;
+		}
+		boolean searchHorizon(int d) {
+			Point treeP = new Point (800+75,600+100);
+			Point center = sub.getCenterPoint();
+			if(treeP.getX() >= (center.getX() - (searchWidth/2)) && treeP.getX() <= (center.getX() + (searchWidth/2))) {
+				if (d>0) {
+					if (treeP.getY() >= center.getY() && treeP.getY() <= center.getY() + searchHeight) {
+						return true;
+					}
+				} else {
+					if (treeP.getY() <= center.getY() && treeP.getY() >= center.getY() - searchHeight) {
+						return true;
+					}
+				}
+			}
+			return false;
+		}
+		void searchFeed() {
+			if (sub.isDetected) {
+				Point center = sub.getCenterPoint();
+				if (center.getX() <= 800-(searchHeight/2) && center.getX() >= 800+(searchHeight/2)) {
+					sub.isDetected = false;
+				}
+				if (center.getY() <= 600-(searchWidth/2) && center.getY() >= 600+(searchWidth/2)) {
+					sub.isDetected = false;
+				}
+			}
+			boolean isFind = false;
+			if (direction == ToUp) {
+				isFind = searchHorizon(-1);
+			} else if (direction >= ToUpLeft && direction <= ToDownLeft) {
+				isFind = searchVertical(-1);
+			} else if (direction == ToDown) {
+				isFind = searchHorizon(1);
+			} else if (direction >= ToDownRight && direction <= ToUpRight) {
+				isFind = searchVertical(1);
+			} else {
+				return;
+			}
+			if (isFind) {
+				sub.isDetected = true;
+			} else {
+				sub.isDetected = false;
+			}
+		}
 		@Override
 		public synchronized void run() {
 			while(true) {
@@ -183,6 +262,7 @@ public abstract class Subject extends JPanel {
 								break;
 							}
 							goWithCheckLimit();
+							searchFeed();
 							Thread.sleep(1000/speed);
 						} catch (InterruptedException e) {
 							e.printStackTrace();
@@ -196,6 +276,13 @@ public abstract class Subject extends JPanel {
 					}
 				}
 			}
+		}
+	}
+
+	class ExploreThread implements Runnable {
+		@Override
+		public synchronized void run() {
+			
 		}
 	}
 }

@@ -62,8 +62,10 @@ public class GameMain extends JFrame{
 					try {
 						JTextField tf = (JTextField)e.getSource();
 						int speed = Integer.parseInt(tf.getText());
-//						Giraffe g1 = gf.g;
-//						g1.setSpeed(speed);
+						for(int i=0;i<gf.giraffes.size();i++) {
+							Giraffe grf = gf.giraffes.get(i);
+							grf.setSpeed(speed);
+						}
 					} catch (NumberFormatException e1) {
 						System.out.println("Wrong Input");
 					}

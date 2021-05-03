@@ -41,6 +41,7 @@ public class GiraffeResource {
 	public Image getBodyImg(int frame) {
 		if (frame>=bodyFrameCount) {
 			System.out.println(frame);
+			return bodyImgs[0];
 		}
 		return bodyImgs[frame];
 	}

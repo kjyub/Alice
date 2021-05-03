@@ -6,7 +6,8 @@ import java.awt.*;
 
 public class GameField extends JPanel {
 	public Vector<Giraffe> giraffes = new Vector<Giraffe>();
-	private GiraffeResource gSrc = new GiraffeResource();
+	private GiraffeResource gSrc = null;
+	private TreeResource tSrc = null;
 	GameField(int sizeX,int sizeY) {
 		int paddingSize = 20;
 		this.setLocation(paddingSize, paddingSize);
@@ -16,6 +17,7 @@ public class GameField extends JPanel {
 //		g.setLocation(30, 30);
 //		this.add(g);
 		gSrc = new GiraffeResource();
+		tSrc = new TreeResource();
 	}
 	void summon(int numGiraffes) {
 		for(int i=0; i<numGiraffes; i++) {
@@ -27,5 +29,8 @@ public class GameField extends JPanel {
 			this.add(grf);
 			grf.move();
 		}
+		Tree tree = new Tree(tSrc);
+		tree.setLocation(800,600);
+		this.add(tree);
 	}
 }

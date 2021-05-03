@@ -8,21 +8,15 @@ import libs.utils;
 public class Giraffe extends Subject{
 	GiraffeResource resource;
 	private int neck,skinColor;
-	private static String name = "GIRRAFE";
-	private static String feed = "TREE";
-	private static int SPEED = 50;
-	private static Dimension SIZE = new Dimension(150,200);
 	private String imgSrc = "src/resource/subjects/girrafe/";
 	protected int headFrame = 0;
 	protected int neckFrame = 0;
 	protected int bodyFrame = 0;
 	Giraffe(GiraffeResource resource) {
-		super(name,feed,SPEED,SIZE);
+		super("GIRRAFE","TREE",200, new Dimension(150,200));
 		this.resource = resource;
 		this.moveMotionThread = new Thread(new MoveMotionThread(this));
 		this.eatingMotionThread = new Thread(new EatingMotionThread(this));
-		this.setBackground(null);
-		this.setOpaque(false);
 		explore();
 	}
 	void explore() {
@@ -121,7 +115,7 @@ public class Giraffe extends Subject{
 				}
 				g.bodyFrame++;
 				// 모션이 끝나면 0으로 다시 초기
-				if(g.bodyFrame == resource.bodyFrameCount) {
+				if(g.bodyFrame >= resource.bodyFrameCount) {
 					g.bodyFrame = 0;
 				}
 				g.repaint();
@@ -146,13 +140,19 @@ public class Giraffe extends Subject{
 		Image neck = resource.getNeckImg(neckFrame);
 		Image body = resource.getBodyImg(bodyFrame);
 		if (this.isReflected) {
-			g.drawImage(head,SIZE.width,0,-SIZE.width,SIZE.height,this);
-			g.drawImage(neck,SIZE.width,0,-SIZE.width,SIZE.height,this);
-			g.drawImage(body,SIZE.width,0,-SIZE.width,SIZE.height,this);
+			g.drawImage(head,this.size.width,0,-this.size.width,this.size.height,this);
+			g.drawImage(neck,this.size.width,0,-this.size.width,this.size.height,this);
+			g.drawImage(body,this.size.width,0,-this.size.width,this.size.height,this);
 		} else {
-			g.drawImage(head,0,0,SIZE.width,SIZE.height,this);
-			g.drawImage(neck,0,0,SIZE.width,SIZE.height,this);
-			g.drawImage(body,0,0,SIZE.width,SIZE.height,this);
+			g.drawImage(head,0,0,this.size.width,this.size.height,this);
+			g.drawImage(neck,0,0,this.size.width,this.size.height,this);
+			g.drawImage(body,0,0,this.size.width,this.size.height,this);
 		}
+		if (this.isDetected) {
+			g.setColor(Color.RED);
+			g.drawString("먹이 발견 !!", 0, 30);
+		}
+		g.setColor(Color.black);
+		g.drawString("X,Y : "+this.getCenterPoint().x+","+this.getCenterPoint().y, 0, 10);
 	}
 }
