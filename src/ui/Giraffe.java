@@ -10,7 +10,7 @@ public class Giraffe extends Subject{
 	private int neck,skinColor;
 	private static String name = "GIRRAFE";
 	private static String feed = "TREE";
-	private static int SPEED = 200;
+	private static int SPEED = 50;
 	private static Dimension SIZE = new Dimension(150,200);
 	private String imgSrc = "src/resource/subjects/girrafe/";
 	protected int headFrame = 0;
@@ -72,23 +72,28 @@ public class Giraffe extends Subject{
 	// 개체의 식사 모션 스레드
 	class EatingMotionThread implements Runnable {
 		private Giraffe g;
+		private int headEatStartFrame = 10;
 		EatingMotionThread(Giraffe g) {
 			this.g = g;
 		}
 		@Override
 		public void run() {
-			while(true) {
+			headFrame = headEatStartFrame;
+			g.isMove = false;
+			g.bodyFrame = 0;
+			for(int i=0; i<8; i++) {
 				// 이동이 멈추면 중단
 				if(!g.isEating) {
 					headFrame = 0;
 					g.repaint();
 					g.isEating = false;
+					g.isMove = true;
 					return;
 				}
 				g.headFrame++;
 				// 모션이 끝나면 0으로 다시 초기
-				if(g.headFrame == resource.headFrameCount) {
-					g.headFrame = 0;
+				if(g.headFrame == resource.headEatFrameCount + headEatStartFrame) {
+					g.headFrame = 0 + headEatStartFrame;
 				}
 				g.repaint();
 				try {
@@ -132,19 +137,22 @@ public class Giraffe extends Subject{
 	@Override
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
-//		Image headImg = utils.getImage(imgSrc+"head"+Integer.toString(headFrame)+".png");
-//		Image neckImg = utils.getImage(imgSrc+"neck"+Integer.toString(neckFrame)+".png");
-//		Image bodyImg = utils.getImage(imgSrc+"body"+Integer.toString(bodyFrame)+".png");
-		if (this.isReflected) {
-			g.drawImage(resource.getHeadImg(headFrame),SIZE.width,0,-SIZE.width,SIZE.height,this);
-			g.drawImage(resource.getNeckImg(neckFrame),SIZE.width,0,-SIZE.width,SIZE.height,this);
-			g.drawImage(resource.getBodyImg(bodyFrame),SIZE.width,0,-SIZE.width,SIZE.height,this);
-		} else {
-			g.drawImage(resource.getHeadImg(headFrame),0,0,SIZE.width,SIZE.height,this);
-			g.drawImage(resource.getNeckImg(neckFrame),0,0,SIZE.width,SIZE.height,this);
-			g.drawImage(resource.getBodyImg(bodyFrame),0,0,SIZE.width,SIZE.height,this);
+		Image head = null;
+		if (headFrame<10) {
+			head = resource.getHeadImg(headFrame);
+		} else if (headFrame>=10)  {
+			head = resource.getHeadEatImg(headFrame-10);
 		}
-//		g.setColor(Color.red);
-//		g.drawRect(0, 0, this.getSize().width-1, this.getSize().height-1);
+		Image neck = resource.getNeckImg(neckFrame);
+		Image body = resource.getBodyImg(bodyFrame);
+		if (this.isReflected) {
+			g.drawImage(head,SIZE.width,0,-SIZE.width,SIZE.height,this);
+			g.drawImage(neck,SIZE.width,0,-SIZE.width,SIZE.height,this);
+			g.drawImage(body,SIZE.width,0,-SIZE.width,SIZE.height,this);
+		} else {
+			g.drawImage(head,0,0,SIZE.width,SIZE.height,this);
+			g.drawImage(neck,0,0,SIZE.width,SIZE.height,this);
+			g.drawImage(body,0,0,SIZE.width,SIZE.height,this);
+		}
 	}
 }

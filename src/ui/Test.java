@@ -1,19 +1,8 @@
-package libs;
+package ui;
 
-import java.awt.*;
-import java.awt.image.*;
-import java.io.*;
+import libs.utils;
 
-import javax.imageio.ImageIO;
-import javax.swing.*;
-
-import ui.Subject;
-
-public class utils {
-	public static Image getImage(String src) {
-		ImageIcon g = new ImageIcon(src);
-		return g.getImage();
-	}
+public class Test {
 	public static int[] getDetectableRange(int sd,int range) {
 		int[] values = new int[1+(range*2)];
 		int v_cnt = 0;
@@ -53,4 +42,16 @@ public class utils {
 		}
 		return values;
 	}
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		for (int i=11;i<19;i++) {
+			int[] values = getDetectableRange(i,2);
+			System.out.println(i+"'s List");
+			for(int v:values) {
+				System.out.print(v+",");
+			}
+			System.out.println("");
+		}
+	}
+
 }

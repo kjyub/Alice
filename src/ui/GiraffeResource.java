@@ -7,15 +7,20 @@ import libs.utils;
 public class GiraffeResource {
 	private String imgSrc = "src/resource/subjects/girrafe/";
 	public int headFrameCount = 1;
+	public int headEatFrameCount = 3;
 	public int neckFrameCount = 1;
 	public int bodyFrameCount = 4;
 	private Image[] headImgs = new Image[headFrameCount];
+	private Image[] headEatImgs = new Image[headEatFrameCount];
 	private Image[] neckImgs = new Image[neckFrameCount];
 	private Image[] bodyImgs = new Image[bodyFrameCount];
 	
 	GiraffeResource() {
 		for(int i=0; i<headFrameCount; i++) {
 			headImgs[i] = utils.getImage(imgSrc+"head"+Integer.toString(i)+".png");
+		}
+		for(int i=0; i<headEatFrameCount; i++) {
+			headEatImgs[i] = utils.getImage(imgSrc+"eat"+Integer.toString(i)+".png");
 		}
 		for(int i=0; i<neckFrameCount; i++) {
 			neckImgs[i] = utils.getImage(imgSrc+"neck"+Integer.toString(i)+".png");
@@ -27,10 +32,16 @@ public class GiraffeResource {
 	public Image getHeadImg(int frame) {
 		return headImgs[frame];
 	}
+	public Image getHeadEatImg(int frame) {
+		return headEatImgs[frame];
+	}
 	public Image getNeckImg(int frame) {
 		return neckImgs[frame];
 	}
 	public Image getBodyImg(int frame) {
+		if (frame>=bodyFrameCount) {
+			System.out.println(frame);
+		}
 		return bodyImgs[frame];
 	}
 }

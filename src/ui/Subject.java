@@ -1,20 +1,24 @@
 package ui;
 import javax.swing.*;
 
+import libs.utils;
+
 import java.awt.*;
 import java.awt.color.*;
 public abstract class Subject extends JPanel {
+	final static int ToStop = 10;
 	final static int ToUp = 11;
-	final static int ToDown = 12;
+	final static int ToUpLeft = 12;
 	final static int ToLeft = 13;
-	final static int ToRight = 14;
-	final static int ToUpLeft = 15;
-	final static int ToUpRight = 16;
-	final static int ToDownLeft = 17;
-	final static int ToDownRight = 18;
+	final static int ToDownLeft = 14;
+	final static int ToDown = 15;
+	final static int ToDownRight = 16;
+	final static int ToRight = 17;
+	final static int ToUpRight = 18;
 	private String name,feed;
 	private int id,speed;
 	private int lastDirection = 13;
+	private int lastHeadDirection = 13;
 	protected boolean isMove,isEating;
 	protected boolean isReflected = false;
 	private Point location;
@@ -28,7 +32,6 @@ public abstract class Subject extends JPanel {
 	}
 	void move() {
 		if (this.isMove || this.isEating) {
-			System.out.println("이미 움직이는중!");
 			return;
 		} else {
 			isMove = true;
@@ -41,12 +44,12 @@ public abstract class Subject extends JPanel {
 		this.isMove = true;
 	}
 	void eat() {
-		if (this.isMove || this.isEating) {
-			System.out.println("이미 움직이는중!");
+		if (this.isEating) {
 			return;
 		} else {
 			isEating = true;
 		}
+		System.out.println("Eat Start");
 		Thread thread = new Thread(new EatThread(this));
 		Thread motionThread = new Thread(eatingMotionThread);
 		thread.start();
@@ -83,74 +86,89 @@ public abstract class Subject extends JPanel {
 		private int feet = 1;
 		MoveThread(Subject sub) {
 			this.sub = sub;
-//			this.distance = (int)(Math.random()*100)+200;
-//			this.direction = (int)(Math.random()*8)+11;
-//			// 객체 이미지 반전
-//			if ((direction>12)) {
-//				if(sub.lastDirection%2 != direction%2) {
-//					isReflected = !isReflected;
-//				}
-//				lastDirection = direction;
-//			}
 		}
-		
-		void toGo() {
-			Point p = sub.getLocation();
-			if (direction==ToUp) {
+		int getDirection(int lastDirection) {
+			int[] dirs = utils.getDetectableRange(lastDirection,2);
+			int[] probs = {12,29,71,88,100}; // 확률
+			int num = (int) (Math.random()*100+1);
+			// 40/35/25  12/29/71/88/100
+			for(int i=0; i<dirs.length; i++) {
+				if (num<=probs[i]) {
+//					System.out.println(dirs[i]);
+					return dirs[i];
+				}
+			}
+			return dirs[dirs.length-1];
+		}
+		void setDirection() {
+			this.distance = (int)(Math.random()*100)+200;
+			// 마지막 방향의 시야 범위 찾기
+			this.direction = getDirection(sub.lastDirection);
+			// 객체 이미지 반전
+			if ((this.direction!=Subject.ToUp)&&(this.direction!=Subject.ToDown)) {
+				if((this.direction<Subject.ToDown) && (sub.lastHeadDirection==Subject.ToRight)) {
+					sub.lastHeadDirection = Subject.ToLeft;			
+					sub.isReflected = !sub.isReflected;
+				} else if((this.direction>Subject.ToDown) && (sub.lastHeadDirection==Subject.ToLeft)) {
+					sub.lastHeadDirection = Subject.ToRight;			
+					sub.isReflected = !sub.isReflected;
+				}
+			}
+			sub.lastDirection = this.direction;
+		}
+		void reverseDirection(int d) {
+			this.direction = d;
+			sub.lastDirection = d;
+			if (!((d==Subject.ToUp) || (d==Subject.ToUp))) {
+				sub.isReflected = !sub.isReflected;
+				if(sub.lastHeadDirection == Subject.ToLeft) {
+					sub.lastHeadDirection = Subject.ToRight;
+				} else {
+					sub.lastHeadDirection = Subject.ToLeft;
+				}
+			}
+		}
+		void goWithCheckLimit() {
+			Point p = sub.getLocation();		
+ 			if (direction==ToUp) {
 				sub.setLocation(p.x, p.y-feet);
 				if(p.y < 0) {
-					this.direction = ToDown;
-					sub.isReflected = !sub.isReflected;
-					sub.lastDirection++;
+					reverseDirection(ToDown);
 				}
 			} else if (direction==ToDown) {
 				sub.setLocation(p.x, p.y+feet);
 				if(p.y > fieldSize.height-sub.getSize().height) {
-					direction = ToUp;
-					sub.isReflected = !sub.isReflected;
-					sub.lastDirection++;
+					reverseDirection(ToUp);
 				}
 			} else if (direction==ToLeft) {
 				sub.setLocation(p.x-feet, p.y);
 				if(p.x < 0) {
-					direction = ToRight;
-					sub.isReflected = !sub.isReflected;
-					sub.lastDirection++;
+					reverseDirection(ToRight);
 				}
 			} else if (direction==ToRight) {
 				sub.setLocation(p.x+feet, p.y);
 				if(p.x > fieldSize.width-sub.getSize().width) {
-					direction = ToLeft;
-					sub.isReflected = !sub.isReflected;
-					sub.lastDirection++;
+					reverseDirection(ToLeft);
 				}
 			} else if (direction==ToUpLeft) {
 				sub.setLocation(p.x-feet, p.y-feet);
 				if(p.y < 0 || p.x < 0) {
-					this.direction = ToDownRight;
-					sub.isReflected = !sub.isReflected;
-					sub.lastDirection++;
+					reverseDirection(ToDownRight);
 				}
 			} else if (direction==ToUpRight) {
 				sub.setLocation(p.x+feet, p.y-feet);
 				if(p.y < 0 || p.x > fieldSize.width-sub.getSize().width) {
-					this.direction = ToDownLeft;
-					sub.isReflected = !sub.isReflected;
-					sub.lastDirection++;
+					reverseDirection(ToDownLeft);
 				}
 			} else if (direction==ToDownLeft) {
 				sub.setLocation(p.x-feet, p.y+feet);
 				if(p.y > fieldSize.height-sub.getSize().height || p.x < 0) {
-					this.direction = ToUpRight;
-					sub.isReflected = !sub.isReflected;
-					sub.lastDirection++;
+					reverseDirection(ToUpRight);
 				}
 			} else if (direction==ToDownRight) {
 				sub.setLocation(p.x+feet, p.y+feet);
 				if(p.y > fieldSize.height-sub.getSize().height || p.x > fieldSize.width-sub.getSize().width) {
-					this.direction = ToUpLeft;
-					sub.isReflected = !sub.isReflected;
-					sub.lastDirection++;
+					reverseDirection(ToUpLeft);
 				}
 			}
 		}
@@ -158,24 +176,15 @@ public abstract class Subject extends JPanel {
 		public synchronized void run() {
 			while(true) {
 				if(sub.isMove) {
-					this.distance = (int)(Math.random()*100)+200;
-					this.direction = (int)(Math.random()*8)+11;
-					// 객체 이미지 반전
-					if ((direction>12)) {
-						if(sub.lastDirection%2 != direction%2) {
-							isReflected = !isReflected;
-						}
-						lastDirection = direction;
-					}
+					setDirection();
 					for(int i=1; i<distance+1; i++) {
 						try {
 							if(!sub.isMove) {
 								break;
 							}
-							toGo();
+							goWithCheckLimit();
 							Thread.sleep(1000/speed);
 						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
 					}
@@ -183,15 +192,10 @@ public abstract class Subject extends JPanel {
 					try {
 						Thread.sleep(100);
 					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 				}
 			}
-//			sub.move();
-//			System.out.println("Move Thread done");
-			
-//			return;
 		}
 	}
 }

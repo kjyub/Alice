@@ -14,35 +14,6 @@ public class GameMain extends JFrame{
 		int distance = 10;
 		ControlPanel(GameField gf) {
 			this.setBackground(new Color(0x4E455D));
-//			for (int i=0; i<tdlr.length; i++) {
-//				JButton btn = new JButton(tdlr[i]);
-//				btn.addActionListener(new ActionListener() {
-//					@Override
-//					public void actionPerformed(ActionEvent e) {
-////						JButton btn = (JButton)e.getSource();
-////						String direction = btn.getText();
-////						Giraffe g1 = gf.g;
-////						if (direction.equals("TOP")) {
-////							g1.moving(Subject.ToUp,distance);
-////						} else if (direction.equals("DOWN")) {
-////							g1.moving(Subject.ToDown,distance);
-////						} else if (direction.equals("LEFT")) {
-////							g1.moving(Subject.ToLeft,distance);
-////						} else if (direction.equals("RIGHT")) {
-////							g1.moving(Subject.ToRight,distance);
-////						} else if (direction.equals("UPLEFT")) {
-////							g1.moving(Subject.ToUpLeft,distance);
-////						} else if (direction.equals("UPRIGHT")) {
-////							g1.moving(Subject.ToUpRight,distance);
-////						} else if (direction.equals("DOWNLEFT")) {
-////							g1.moving(Subject.ToDownLeft,distance);
-////						} else if (direction.equals("DOWNRIGHT")) {
-////							g1.moving(Subject.ToDownRight,distance);
-////						}
-//					}
-//				});
-//				this.add(btn);
-//			}
 			JLabel numberLabel = new JLabel("number of giraffe and summon");
 			numberLabel.setForeground(Color.white);
 			JTextField grfTf = new JTextField(5);
@@ -103,7 +74,10 @@ public class GameMain extends JFrame{
 			eating.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-//					gf.g.eating();
+					for(int i=0;i<gf.giraffes.size();i++) {
+						Giraffe grf = gf.giraffes.get(i);
+						grf.eat();
+					}
 				}
 			});
 			this.add(eating);
