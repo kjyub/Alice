@@ -1,7 +1,7 @@
 package ui;
 
 import java.awt.*;
-
+import java.util.*;
 import javax.swing.*;
 import libs.utils;
 
@@ -12,8 +12,8 @@ public class Giraffe extends Subject{
 	protected int headFrame = 0;
 	protected int neckFrame = 0;
 	protected int bodyFrame = 0;
-	Giraffe(GiraffeResource resource) {
-		super("GIRRAFE","TREE",200, new Dimension(150,200));
+	Giraffe(GiraffeResource resource,Vector<Subject> trees) {
+		super("GIRRAFE",trees,200, new Dimension(150,200));
 		this.resource = resource;
 		this.moveMotionThread = new Thread(new MoveMotionThread(this));
 		this.eatingMotionThread = new Thread(new EatingMotionThread(this));
@@ -115,7 +115,7 @@ public class Giraffe extends Subject{
 				}
 				g.bodyFrame++;
 				// 모션이 끝나면 0으로 다시 초기
-				if(g.bodyFrame >= resource.bodyFrameCount) {
+				if(g.bodyFrame == resource.bodyFrameCount) {
 					g.bodyFrame = 0;
 				}
 				g.repaint();
@@ -151,6 +151,13 @@ public class Giraffe extends Subject{
 		if (this.isDetected) {
 			g.setColor(Color.RED);
 			g.drawString("먹이 발견 !!", 0, 30);
+		}
+		if (this.eatReady) {
+			g.setColor(Color.BLUE);
+			g.drawString("배고픔 !!", 0, 50);
+		} else {
+			g.setColor(Color.BLUE);
+			g.drawString("배부름 !!", 0, 50);
 		}
 		g.setColor(Color.black);
 		g.drawString("X,Y : "+this.getCenterPoint().x+","+this.getCenterPoint().y, 0, 10);

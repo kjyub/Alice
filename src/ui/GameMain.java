@@ -118,7 +118,7 @@ public class GameMain extends JFrame{
 		gameField = new GameField(this.getSize().width,this.getSize().height);
 		this.add(gameField,BorderLayout.CENTER);
 		this.add(new ControlPanel(gameField),BorderLayout.NORTH);
-		
+		gameField.treeSummon(10);
 		this.setVisible(true);
 	}
  	

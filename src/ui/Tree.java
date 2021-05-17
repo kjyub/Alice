@@ -7,7 +7,7 @@ import libs.utils;
 class Tree extends Subject {
 	TreeResource rsrc = null;
 	public Tree(TreeResource rsrc) {
-		super("Tree","TREE",0, new Dimension(150,200));
+		super("Tree",null,0, new Dimension(150,200));
 		this.rsrc = rsrc;
 	}
 	@Override
