@@ -10,10 +10,12 @@ public class GiraffeResource {
 	public int headEatFrameCount = 3;
 	public int neckFrameCount = 1;
 	public int bodyFrameCount = 4;
+	public int babyFrameCount = 4;
 	private Image[] headImgs = new Image[headFrameCount];
 	private Image[] headEatImgs = new Image[headEatFrameCount];
 	private Image[] neckImgs = new Image[neckFrameCount];
 	private Image[] bodyImgs = new Image[bodyFrameCount];
+	private Image[] babyImgs = new Image[babyFrameCount];
 	
 	GiraffeResource() {
 		for(int i=0; i<headFrameCount; i++) {
@@ -27,6 +29,9 @@ public class GiraffeResource {
 		}
 		for(int i=0; i<bodyFrameCount; i++) {
 			bodyImgs[i] = utils.getImage(imgSrc+"body"+Integer.toString(i)+".png");
+		}
+		for(int i=0; i<babyFrameCount; i++) {
+			babyImgs[i] = utils.getImage(imgSrc+"baby"+Integer.toString(i)+".png");
 		}
 	}
 	public Image getHeadImg(int frame) {
@@ -44,5 +49,8 @@ public class GiraffeResource {
 			return bodyImgs[0];
 		}
 		return bodyImgs[frame];
+	}
+	public Image getBabyImg(int frame) {
+		return babyImgs[frame];
 	}
 }

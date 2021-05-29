@@ -14,7 +14,7 @@ public class GameMain extends JFrame{
 		int distance = 10;
 		ControlPanel(GameField gf) {
 			this.setBackground(new Color(0x4E455D));
-			JLabel numberLabel = new JLabel("number of giraffe and summon");
+			JLabel numberLabel = new JLabel("summon");
 			numberLabel.setForeground(Color.white);
 			JTextField grfTf = new JTextField(5);
 			grfTf.addActionListener(new ActionListener() {
@@ -28,6 +28,7 @@ public class GameMain extends JFrame{
 					} catch (NumberFormatException e1) {
 						System.out.println("Wrong Input");
 					}
+					gf.repaint();
 				}
 			});
 			this.add(numberLabel);
@@ -50,11 +51,12 @@ public class GameMain extends JFrame{
 				}
 			});
 			this.add(tf);
+			
 			JLabel speedLabel = new JLabel("SPEED");
 			speedLabel.setForeground(Color.white);
 			this.add(speedLabel);
 			JTextField speedTf = new JTextField(5);
-			speedTf.setText("100");
+			speedTf.setText("50");
 			speedTf.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
@@ -72,6 +74,53 @@ public class GameMain extends JFrame{
 				}
 			});
 			this.add(speedTf);
+			
+			JLabel rateLabel = new JLabel("Age Rate");
+			rateLabel.setForeground(Color.white);
+			this.add(rateLabel);
+			JTextField rateTf = new JTextField(5);
+			rateTf.setText("50");
+			rateTf.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					// TODO Auto-generated method stub
+					try {
+						JTextField tf = (JTextField)e.getSource();
+						int rate = Integer.parseInt(tf.getText());
+						for(int i=0;i<gf.giraffes.size();i++) {
+							Giraffe grf = gf.giraffes.get(i);
+							grf.setAgeRate(rate);
+						}
+					} catch (NumberFormatException e1) {
+						System.out.println("Wrong Input");
+					}
+				}
+			});
+			this.add(rateTf);
+
+			JLabel calLabel = new JLabel("calorie");
+			calLabel.setForeground(Color.white);
+			this.add(calLabel);
+			JTextField calTf = new JTextField(5);
+			calTf.setText("50");
+			calTf.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					// TODO Auto-generated method stub
+					try {
+						JTextField tf = (JTextField)e.getSource();
+						int cal = Integer.parseInt(tf.getText());
+						for(int i=0;i<gf.giraffes.size();i++) {
+							Giraffe grf = gf.giraffes.get(i);
+							grf.setCal(cal);
+						}
+					} catch (NumberFormatException e1) {
+						System.out.println("Wrong Input");
+					}
+				}
+			});
+			this.add(calTf);
+			
 			JButton eating = new JButton("EAT");
 			eating.addActionListener(new ActionListener() {
 				@Override
@@ -94,14 +143,19 @@ public class GameMain extends JFrame{
 				}
 			});
 			this.add(startBtn);
-			JButton stopBtn = new JButton("STOP");
+			JButton stopBtn = new JButton("REMOVE");
 			stopBtn.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					for(int i=0;i<gf.giraffes.size();i++) {
 						Giraffe grf = gf.giraffes.get(i);
-						grf.isMove=false;
+						System.out.println(grf);
+						grf.die();
+						gf.giraffes.remove(i);
 					}
+					gf.trees.removeAllElements();
+					gf.removeAll();
+					gf.repaint();
 				}
 			});
 			this.add(stopBtn);
@@ -113,12 +167,13 @@ public class GameMain extends JFrame{
 		this.setSize(1650,1050);
 		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
 		this.setBackground(new Color(0xF4F6FC));
+//		this.setBackground(Color.BLUE);
 //		this.setResizable(false);
 		this.setLayout(new BorderLayout());
 		gameField = new GameField(this.getSize().width,this.getSize().height);
+		gameField.treeSummon(3);
 		this.add(gameField,BorderLayout.CENTER);
 		this.add(new ControlPanel(gameField),BorderLayout.NORTH);
-		gameField.treeSummon(10);
 		this.setVisible(true);
 	}
  	

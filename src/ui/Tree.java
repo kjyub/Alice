@@ -6,8 +6,8 @@ import libs.utils;
 
 class Tree extends Subject {
 	TreeResource rsrc = null;
-	public Tree(TreeResource rsrc) {
-		super("Tree",null,0, new Dimension(150,200));
+	public Tree(GameField gf,TreeResource rsrc) {
+		super(gf,"Tree",null,0, new Dimension(150,200));
 		this.rsrc = rsrc;
 	}
 	@Override

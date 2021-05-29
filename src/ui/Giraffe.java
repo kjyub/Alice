@@ -12,11 +12,14 @@ public class Giraffe extends Subject{
 	protected int headFrame = 0;
 	protected int neckFrame = 0;
 	protected int bodyFrame = 0;
-	Giraffe(GiraffeResource resource,Vector<Subject> trees) {
-		super("GIRRAFE",trees,200, new Dimension(150,200));
-		this.resource = resource;
+	protected int dieFrame = 0;
+	private AlphaComposite alphaComposite;
+	Giraffe(GameField gf) {
+		super(gf,"GIRRAFE",gf.getFeeds(),50, new Dimension(150,200));
+		this.resource = gf.getResource();
 		this.moveMotionThread = new Thread(new MoveMotionThread(this));
 		this.eatingMotionThread = new Thread(new EatingMotionThread(this));
+		this.dieMotionThread = new Thread(new DieMotionThread(this));
 		explore();
 	}
 	void explore() {
@@ -112,6 +115,7 @@ public class Giraffe extends Subject{
 				if(!g.isMove) {
 					g.bodyFrame = 0;
 					g.repaint();
+					break;
 				}
 				g.bodyFrame++;
 				// 모션이 끝나면 0으로 다시 초기
@@ -120,11 +124,36 @@ public class Giraffe extends Subject{
 				}
 				g.repaint();
 				try {
-					Thread.sleep(200);
+					Thread.sleep(66);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 			}
+		}
+	}
+	
+	// 개체의 사망 모션 스레드
+	class DieMotionThread implements Runnable {
+		private Giraffe g;
+		DieMotionThread(Giraffe g) {
+			this.g = g;
+		}
+		@Override
+		public synchronized void run() {
+			// 이동이 멈추면 중단
+			while(g.dieFrame < 10){
+				g.dieFrame++;
+				g.repaint();
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+
+			g.field.remove(g);
+			g.field.giraffes.remove(g);
+			g.field.repaint();
 		}
 	}
 	
@@ -139,27 +168,65 @@ public class Giraffe extends Subject{
 		}
 		Image neck = resource.getNeckImg(neckFrame);
 		Image body = resource.getBodyImg(bodyFrame);
-		if (this.isReflected) {
-			g.drawImage(head,this.size.width,0,-this.size.width,this.size.height,this);
-			g.drawImage(neck,this.size.width,0,-this.size.width,this.size.height,this);
-			g.drawImage(body,this.size.width,0,-this.size.width,this.size.height,this);
+
+		if (this.died) {
+			float alpha = 1 - (float) dieFrame/10;
+			alphaComposite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha);
+			g = (Graphics2D)g;
+		    ((Graphics2D) g).setComposite(alphaComposite);
+		}
+		if (this.isBreeded) {
+			Image baby = resource.getBabyImg(bodyFrame);
+			g.drawString(
+				"번식 됨 ",
+				0, 90
+			);
+			if (this.isReflected) {
+				g.drawImage(head,this.size.width+(this.size.width/2),0,-this.size.width,this.size.height,this);
+				g.drawImage(neck,this.size.width+(this.size.width/2),0,-this.size.width,this.size.height,this);
+				g.drawImage(body,this.size.width+(this.size.width/2),0,-this.size.width,this.size.height,this);
+				g.drawImage(baby,this.size.width/2,this.size.height/2,-this.size.width/2,this.size.height/2,this);
+			} else {
+				g.drawImage(head,(this.size.width/2),0,this.size.width,this.size.height,this);
+				g.drawImage(neck,(this.size.width/2),0,this.size.width,this.size.height,this);
+				g.drawImage(body,(this.size.width/2),0,this.size.width,this.size.height,this);
+				g.drawImage(baby,this.size.width+(this.size.width/2),this.size.height/2,this.size.width/2,this.size.height/2,this);
+			}
 		} else {
-			g.drawImage(head,0,0,this.size.width,this.size.height,this);
-			g.drawImage(neck,0,0,this.size.width,this.size.height,this);
-			g.drawImage(body,0,0,this.size.width,this.size.height,this);
+			if (this.isReflected) {
+				g.drawImage(head,this.size.width,0,-this.size.width,this.size.height,this);
+				g.drawImage(neck,this.size.width,0,-this.size.width,this.size.height,this);
+				g.drawImage(body,this.size.width,0,-this.size.width,this.size.height,this);
+			} else {
+				g.drawImage(head,0,0,this.size.width,this.size.height,this);
+				g.drawImage(neck,0,0,this.size.width,this.size.height,this);
+				g.drawImage(body,0,0,this.size.width,this.size.height,this);
+			}
 		}
 		if (this.isDetected) {
 			g.setColor(Color.RED);
-			g.drawString("먹이 발견 !!", 0, 30);
+			g.drawString("먹이 발견 !!", 0, 50);
 		}
 		if (this.eatReady) {
 			g.setColor(Color.BLUE);
-			g.drawString("배고픔 !!", 0, 50);
+			g.drawString("식사 준비 !!", 0, 70);
 		} else {
 			g.setColor(Color.BLUE);
-			g.drawString("배부름 !!", 0, 50);
+			g.drawString("식사 대기 !!", 0, 70);
 		}
 		g.setColor(Color.black);
-		g.drawString("X,Y : "+this.getCenterPoint().x+","+this.getCenterPoint().y, 0, 10);
+		g.drawString(
+			"X,Y : "+this.getCenterPoint().x+","+this.getCenterPoint().y,
+			0, 10
+		);
+		g.drawString(
+			"배고픔 : "+this.hungry+",번식 : "+this.breed,
+			0, 30
+		);
 	}
+	@Override
+	public String toString() {
+		return "Giraffe xy : ["+this.getX()+","+this.getY()+"]";
+	}
+	
 }

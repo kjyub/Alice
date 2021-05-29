@@ -25,21 +25,35 @@ public abstract class Subject extends JPanel {
 	private int lastDirection = 13;
 	private int lastHeadDirection = 13;
 	
+	protected GameField field;
+	
 	protected String name;
 	protected String feed;
 	protected int speed = 1;
-	protected int eatTime = 3000;
-	protected int eatCoolTime = 5000;
-	protected boolean eatReady = true;
+	protected int eatTime = 3000; // 먹이 먹는 시간
+	protected int eatCoolTime = 10*1000; // 먹이먹고 포만감 꺼지는 시간 - 조절 가능
+	protected boolean eatReady = true; // eatCoolTime 끝나는걸 알
+	protected int ageRate = 25; // (중요) 수치들 배수 - 조절 가능
+	protected int cal = 3; // 칼로리, 포만감 상승 수치
+	protected int age = 0; // 
+	protected int hungry = 5*ageRate; // 초기 포만감 수치 (기본값 : 100*ageRate)
+	protected int breedReadyValue = 1;  // 몇번 먹이를 먹어야 출산을 할수 있는지 - 조절 가능
+	protected int breedValue = 10; // 0~100  조절 가능
+	protected int breed = 0;
+	protected int maxIndependence = 2; // 조절 가능
+	protected int independence = 0;
 	protected Dimension size;
 	protected Vector<Subject> feeds = null;
 	protected boolean isMove,isEating;
+	protected boolean isBreeded = false;
 	protected boolean isReflected = false;
 	protected boolean isDetected = false;
-	private Point location;
+	protected boolean died = false;
 	protected Runnable moveMotionThread;
 	protected Runnable eatingMotionThread;
-	Subject(String name, Vector<Subject> feeds,int speed,Dimension size) {
+	protected Runnable dieMotionThread;
+	Subject(GameField gf,String name, Vector<Subject> feeds,int speed,Dimension size) {
+		this.field = gf;
 		this.name = name;
 		this.feeds = feeds;
 		this.speed = speed;
@@ -85,6 +99,34 @@ public abstract class Subject extends JPanel {
 	void setSpeed(int speed) {
 		this.speed = speed;
 	}
+	void setAgeRate(int rate) {
+		this.ageRate = rate;
+	}
+	void setCal(int cal) {
+		this.cal = cal;
+	}
+	void die() {
+		if(this.died) {
+			return;
+		}
+		this.died = true;
+		this.isMove = false;
+		this.repaint();
+		Thread motionThread = new Thread(dieMotionThread);
+		motionThread.start();
+	}
+	// 새끼 독립시키기
+	void independent(Point spawnPoint) {
+		this.breed = 0;
+		this.independence = 0;
+		this.isBreeded = false;
+		Giraffe newGiraffe = new Giraffe(this.field);
+		this.field.giraffes.add(newGiraffe);
+		newGiraffe.setLocation(spawnPoint);
+		newGiraffe.move();
+		this.field.add(newGiraffe);
+		this.field.repaint();
+	}
 	
 	class EatThread implements Runnable {
 		Subject sub;
@@ -97,9 +139,25 @@ public abstract class Subject extends JPanel {
 				sub.eatReady = false;
 				sub.isEating=true;
 				sub.isMove=false;
+				// 식사 시간 
 				Thread.sleep(eatTime);
+				// 포만감 상승
+				sub.hungry += cal*ageRate;
+				// 포만감 최대 도달 
+				if (sub.hungry > 100*ageRate) {
+					sub.hungry = 100*ageRate;
+				}
+				// 새끼를 낳은 상태면 새끼 성장
+				if (sub.isBreeded) {
+					sub.independence+=1;
+					System.out.println("새끼 나이 "+sub.independence);
+				}
+				// 새끼가 성체까지 성장하면 독립시키기
+				if (sub.independence >= sub.maxIndependence) {
+					sub.independent(sub.getLocation());
+				}
 				sub.isEating=false;
-				sub.isMove=true;
+				sub.move();
 				sub.isDetected=false;
 				Thread.sleep(eatCoolTime);
 				sub.eatReady = true;
@@ -311,12 +369,13 @@ public abstract class Subject extends JPanel {
 		}
 		void toFeed(Subject feed) {
 			boolean feedSideLeft = true;
+			Point subCenter = sub.getCenterPoint();
 			int xd;
-			if (feed.getX()+(feed.getWidth()/2) > sub.getX()) {
-				xd = (feed.getX()-sub.getX()-(feed.getWidth()/2));
+			if (feed.getX()+(feed.getWidth()/2) > subCenter.getX()) {
+				xd = (int) (feed.getX()-subCenter.getX()-(feed.getWidth()/2));
 			} else {
 				feedSideLeft = false;
-				xd = ((feed.getX()+feed.getWidth())-sub.getX());
+				xd = (int) ((feed.getX()+feed.getWidth())-subCenter.getX());
 			}
 			int yd = (feed.getY()-sub.getY());
 			if (Math.abs(yd)>Math.abs(xd)) {
@@ -360,6 +419,10 @@ public abstract class Subject extends JPanel {
 		public synchronized void run() {
 			while(true) {
 				Subject searchedFeed = null;
+				if (sub.died) {
+					sub.isMove=false;
+					break;
+				}
 				if(sub.isMove) {
 					setDirection();
 					for(int i=1; i<distance+1; i++) {
@@ -368,6 +431,26 @@ public abstract class Subject extends JPanel {
 								break;
 							}
 							goWithCheckLimit();
+							sub.hungry--;
+							if(sub.hungry <= 0 && !sub.died) {
+								sub.die();
+								break;
+							}
+							// 포만감이 채워지면 출산 준비
+							if(!isBreeded) {
+								// 포만감이 일정 이상 올라가면 출산 준비
+								if(sub.hungry >= breedReadyValue*ageRate) {
+									sub.breed++;
+									// 출산 준비가 채워지면 출산
+									if(sub.breed > breedValue*ageRate) {
+										sub.setSize(sub.getWidth()*2,sub.getHeight());
+										sub.isBreeded = true;
+										sub.breed = 0;
+									}
+								} else {
+									sub.breed = 0;
+								}
+							}
 							// 먹이 탐색
 							if(sub.eatReady) {								
 								searchedFeed = searchFeed();
