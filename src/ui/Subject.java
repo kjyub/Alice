@@ -17,6 +17,7 @@ public abstract class Subject extends JPanel {
 	final static int ToDownRight = 16;
 	final static int ToRight = 17;
 	final static int ToUpRight = 18;
+	final static Dimension DefaultSize = new Dimension(150,200);
 	
 	private static int searchWidth = 600;
 	private static int searchHeight = 200;
@@ -34,9 +35,9 @@ public abstract class Subject extends JPanel {
 	protected int eatCoolTime = 10*1000; // 먹이먹고 포만감 꺼지는 시간 - 조절 가능
 	protected boolean eatReady = true; // eatCoolTime 끝나는걸 알
 	protected int ageRate = 25; // (중요) 수치들 배수 - 조절 가능
-	protected int cal = 3; // 칼로리, 포만감 상승 수치
+	protected int cal = 3*ageRate; // 칼로리, 포만감 상승 수치 (1~100)
 	protected int age = 0; // 
-	protected int hungry = 5*ageRate; // 초기 포만감 수치 (기본값 : 100*ageRate)
+	protected int hungry = 100*ageRate; // 초기 포만감 수치 (기본값 : 100*ageRate)
 	protected int breedReadyValue = 1;  // 몇번 먹이를 먹어야 출산을 할수 있는지 - 조절 가능
 	protected int breedValue = 10; // 0~100  조절 가능
 	protected int breed = 0;
@@ -52,16 +53,16 @@ public abstract class Subject extends JPanel {
 	protected Runnable moveMotionThread;
 	protected Runnable eatingMotionThread;
 	protected Runnable dieMotionThread;
-	Subject(GameField gf,String name, Vector<Subject> feeds,int speed,Dimension size) {
+	Subject(GameField gf,String name, Vector<Subject> feeds,int speed) {
 		this.field = gf;
 		this.name = name;
 		this.feeds = feeds;
 		this.speed = speed;
-		this.size = size;
+		this.size = DefaultSize;
+		this.setSize(DefaultSize);
 		this.setBackground(null);
 		this.setOpaque(false);
 		this.setVisible(true);
-		this.setSize(size);
 	}
 	Point getCenterPoint() {
 		Point l = this.getLocation();
@@ -92,7 +93,6 @@ public abstract class Subject extends JPanel {
 		Thread motionThread = new Thread(eatingMotionThread);
 		thread.start();
 		motionThread.start();
-		
 	};
 	abstract void death();
 	abstract void breeding();
@@ -157,7 +157,7 @@ public abstract class Subject extends JPanel {
 					sub.independent(sub.getLocation());
 				}
 				sub.isEating=false;
-				sub.move();
+				sub.isMove=true;
 				sub.isDetected=false;
 				Thread.sleep(eatCoolTime);
 				sub.eatReady = true;
@@ -467,7 +467,7 @@ public abstract class Subject extends JPanel {
 					}
 				} else {
 					try {
-						Thread.sleep(100);
+						Thread.sleep(500);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
