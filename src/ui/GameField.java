@@ -29,7 +29,6 @@ public class GameField extends JPanel {
 			this.add(grf);
 			grf.move();
 		}
-		
 	}
 	void treeSummon(int numTree) {
 		for(int i=0; i<numTree; i++) {

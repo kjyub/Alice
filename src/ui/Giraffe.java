@@ -7,7 +7,7 @@ import libs.utils;
 
 public class Giraffe extends Subject{
 	GiraffeResource resource;
-	private int neck;
+	protected int neck;
 	private static final int DefaultNeck = 10;
 	private static final int NeckHeightUnit = 7;
 	private static final int WithoutNeckHeight = 150;
@@ -18,13 +18,14 @@ public class Giraffe extends Subject{
 	private AlphaComposite alphaComposite;
 	Giraffe(GameField gf) {
 		super(gf,"GIRRAFE",gf.getFeeds(),50);
-		this.neck = (int) (Math.random()*10)+5;
+		this.neck = DefaultNeck;
 		this.setSize(new Dimension(150,130+(this.neck*NeckHeightUnit)));
 		this.resource = gf.getResource();
 		this.moveMotionThread = new Thread(new MoveMotionThread(this));
 		this.eatingMotionThread = new Thread(new EatingMotionThread(this));
 		this.dieMotionThread = new Thread(new DieMotionThread(this));
 		explore();
+		updateAmount(gf);
 	}
 	Giraffe(GameField gf,int gene) {
 		super(gf,"GIRRAFE",gf.getFeeds(),50);
@@ -35,6 +36,10 @@ public class Giraffe extends Subject{
 		this.eatingMotionThread = new Thread(new EatingMotionThread(this));
 		this.dieMotionThread = new Thread(new DieMotionThread(this));
 		explore();
+		updateAmount(gf);
+	}
+	void updateAmount(GameField gf) {
+		GameMain.grfAmount.setText(Integer.toString(gf.giraffes.size()+1));
 	}
 	int neckMutant(int neck) {
 		int p = (int) (Math.random() * 10) + 1;
@@ -84,13 +89,13 @@ public class Giraffe extends Subject{
 				} else {
 					int distance = (int)Math.random()*10+5;
 //					grf.moving(distance, Subject.ToRight);
-					System.out.println(distance+" ∏∏≈≠ øÚ¡˜¿Œ¥Ÿ.");
+					System.out.println(distance+" ??? ?????Œ¥?.");
 				}
 			}
 		}
 	}
 	
-	// ∞≥√º¿« ΩƒªÁ ∏º« Ω∫∑πµÂ
+	// Í∞úÏ≤¥Ïùò ÏãùÏÇ¨ Î™®ÏÖò Ïä§Î†àÎìú
 	class EatingMotionThread implements Runnable {
 		private Giraffe g;
 		private int headEatStartFrame = 10;
@@ -103,7 +108,7 @@ public class Giraffe extends Subject{
 			g.isMove = false;
 			g.bodyFrame = 0;
 			for(int i=0; i<8; i++) {
-				// ¿Ãµø¿Ã ∏ÿ√ﬂ∏È ¡ﬂ¥‹
+				// Ïù¥ÎèôÏù¥ Î©àÏ∂îÎ©¥ Ï§ëÎã®
 				if(!g.isEating) {
 					headFrame = 0;
 					g.repaint();
@@ -112,7 +117,7 @@ public class Giraffe extends Subject{
 					return;
 				}
 				g.headFrame++;
-				// ∏º«¿Ã ≥°≥™∏È 0¿∏∑Œ ¥ŸΩ√ √ ±‚
+				// Î™®ÏÖòÏù¥ ÎÅùÎÇòÎ©¥ 0ÏúºÎ°ú Îã§Ïãú Ï¥àÍ∏∞
 				if(g.headFrame == resource.headEatFrameCount + headEatStartFrame) {
 					g.headFrame = 0 + headEatStartFrame;
 				}
@@ -126,7 +131,7 @@ public class Giraffe extends Subject{
 		}
 	}
 	
-	// ∞≥√º¿« ¿Ãµø ∏º« Ω∫∑πµÂ
+	// Í∞úÏ≤¥Ïùò Ïù¥Îèô Î™®ÏÖò Ïä§Î†àÎìú
 	class MoveMotionThread implements Runnable {
 		private Giraffe g;
 		MoveMotionThread(Giraffe g) {
@@ -135,7 +140,7 @@ public class Giraffe extends Subject{
 		@Override
 		public synchronized void run() {
 			while(true) {
-				// ¿Ãµø¿Ã ∏ÿ√ﬂ∏È ¡ﬂ¥‹
+				// Ïù¥ÎèôÏù¥ Î©àÏ∂îÎ©¥ Ï§ëÎã®
 				if(!g.isMove) {
 					g.bodyFrame = 0;
 					g.repaint();
@@ -147,7 +152,7 @@ public class Giraffe extends Subject{
 //					break;
 				}
 				g.bodyFrame++;
-				// ∏º«¿Ã ≥°≥™∏È 0¿∏∑Œ ¥ŸΩ√ √ ±‚
+				// Î™®ÏÖòÏù¥ ÎÅùÎÇòÎ©¥ 0ÏúºÎ°ú Îã§Ïãú Ï¥àÍ∏∞
 				if(g.bodyFrame == resource.bodyFrameCount) {
 					g.bodyFrame = 0;
 				}
@@ -161,7 +166,7 @@ public class Giraffe extends Subject{
 		}
 	}
 	
-	// ∞≥√º¿« ªÁ∏¡ ∏º« Ω∫∑πµÂ
+	// Í∞úÏ≤¥Ïùò ÏÇ¨Îßù Î™®ÏÖò Ïä§Î†àÎìú
 	class DieMotionThread implements Runnable {
 		private Giraffe g;
 		DieMotionThread(Giraffe g) {
@@ -169,7 +174,7 @@ public class Giraffe extends Subject{
 		}
 		@Override
 		public synchronized void run() {
-			// ¿Ãµø¿Ã ∏ÿ√ﬂ∏È ¡ﬂ¥‹
+			// Ïù¥ÎèôÏù¥ Î©àÏ∂îÎ©¥ Ï§ëÎã®
 			while(g.dieFrame < 10){
 				g.dieFrame++;
 				g.repaint();
@@ -210,7 +215,7 @@ public class Giraffe extends Subject{
 		if (this.isBreeded) {
 			Image baby = resource.getBabyImg(bodyFrame);
 			g.drawString(
-				"π¯Ωƒ µ  ",
+				"Î≤àÏãù Îê® ",
 				0, 90
 			);
 			if (this.isReflected) {
@@ -237,22 +242,22 @@ public class Giraffe extends Subject{
 		}
 		if (this.isDetected) {
 			g.setColor(Color.RED);
-			g.drawString("∏‘¿Ã πﬂ∞ﬂ !!", 0, 50);
+			g.drawString("Î®πÏù¥ Î∞úÍ≤¨ !!", 0, 50);
 		}
 		if (this.eatReady) {
 			g.setColor(Color.BLUE);
-			g.drawString("ΩƒªÁ ¡ÿ∫Ò !!", 0, 70);
+			g.drawString("ÏãùÏÇ¨ Ï§ÄÎπÑ !!", 0, 70);
 		} else {
 			g.setColor(Color.BLUE);
-			g.drawString("ΩƒªÁ ¥Î±‚ !!", 0, 70);
+			g.drawString("ÏãùÏÇ¨ ÎåÄÍ∏∞ !!", 0, 70);
 		}
 		g.setColor(Color.black);
 		g.drawString(
-			"X,Y : "+this.getCenterPoint().x+","+this.getCenterPoint().y+", ∏Ò : "+this.neck,
+			"X,Y : "+this.getCenterPoint().x+","+this.getCenterPoint().y+", Î™© : "+this.neck,
 			0, 10
 		);
 		g.drawString(
-			"πË∞Ì«ƒ : "+this.hungry+",π¯Ωƒ : "+this.breed,
+			"Î∞∞Í≥†Ìîî : "+this.hungry+",Î≤àÏãù : "+this.breed,
 			0, 30
 		);
 	}

@@ -7,6 +7,8 @@ import java.awt.event.*;
 
 public class GameMain extends JFrame{
 
+	public static JLabel grfAmount = null;
+	
 	GameField gameField = null;
 	
 	class ControlPanel extends JPanel {
@@ -16,6 +18,14 @@ public class GameMain extends JFrame{
 			this.setBackground(new Color(0x4E455D));
 			JLabel numberLabel = new JLabel("summon");
 			numberLabel.setForeground(Color.white);
+			
+			JLabel grfAmountLabel = new JLabel("개체 수 : ");
+			grfAmountLabel.setForeground(Color.white);
+			this.add(grfAmountLabel);
+			grfAmount = new JLabel("0");
+			grfAmount.setForeground(Color.white);
+			this.add(grfAmount);
+			
 			JTextField grfTf = new JTextField(5);
 			grfTf.addActionListener(new ActionListener() {
 				@Override

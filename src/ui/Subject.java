@@ -31,17 +31,17 @@ public abstract class Subject extends JPanel {
 	protected String name;
 	protected String feed;
 	protected int speed = 1;
-	protected int eatTime = 3000; // ¸ÔÀÌ ¸Ô´Â ½Ã°£
-	protected int eatCoolTime = 10*1000; // ¸ÔÀÌ¸Ô°í Æ÷¸¸°¨ ²¨Áö´Â ½Ã°£ - Á¶Àı °¡´É
-	protected boolean eatReady = true; // eatCoolTime ³¡³ª´Â°É ¾Ë
-	protected int ageRate = 25; // (Áß¿ä) ¼öÄ¡µé ¹è¼ö - Á¶Àı °¡´É
-	protected int cal = 3*ageRate; // Ä®·Î¸®, Æ÷¸¸°¨ »ó½Â ¼öÄ¡ (1~100)
+	protected int eatTime = 3000; // ë¨¹ì´ ë¨¹ëŠ” ì‹œê°„
+	protected int eatCoolTime = 10*1000; // ë¨¹ì´ë¨¹ê³  í¬ë§Œê° êº¼ì§€ëŠ” ì‹œê°„ - ì¡°ì ˆ ê°€ëŠ¥
+	protected boolean eatReady = true; // eatCoolTime ëë‚˜ëŠ”ê±¸ ì•Œ
+	protected int ageRate = 25; // (ì¤‘ìš”) ìˆ˜ì¹˜ë“¤ ë°°ìˆ˜ - ì¡°ì ˆ ê°€ëŠ¥
+	protected int cal = 3*ageRate; // ì¹¼ë¡œë¦¬, í¬ë§Œê° ìƒìŠ¹ ìˆ˜ì¹˜ (1~100)
 	protected int age = 0; // 
-	protected int hungry = 100*ageRate; // ÃÊ±â Æ÷¸¸°¨ ¼öÄ¡ (±âº»°ª : 100*ageRate)
-	protected int breedReadyValue = 1;  // ¸î¹ø ¸ÔÀÌ¸¦ ¸Ô¾î¾ß Ãâ»êÀ» ÇÒ¼ö ÀÖ´ÂÁö - Á¶Àı °¡´É
-	protected int breedValue = 10; // 0~100  Á¶Àı °¡´É
+	protected int hungry = 100*ageRate; // ì´ˆê¸° í¬ë§Œê° ìˆ˜ì¹˜ (ê¸°ë³¸ê°’ : 100*ageRate)
+	protected int breedReadyValue = 1;  // ëª‡ë²ˆ ë¨¹ì´ë¥¼ ë¨¹ì–´ì•¼ ì¶œì‚°ì„ í• ìˆ˜ ìˆëŠ”ì§€ - ì¡°ì ˆ ê°€ëŠ¥
+	protected int breedValue = 10; // 0~100  ì¡°ì ˆ ê°€ëŠ¥
 	protected int breed = 0;
-	protected int maxIndependence = 2; // Á¶Àı °¡´É
+	protected int maxIndependence = 2; // ì¡°ì ˆ ê°€ëŠ¥
 	protected int independence = 0;
 	protected Dimension size;
 	protected Vector<Subject> feeds = null;
@@ -115,12 +115,13 @@ public abstract class Subject extends JPanel {
 		Thread motionThread = new Thread(dieMotionThread);
 		motionThread.start();
 	}
-	// »õ³¢ µ¶¸³½ÃÅ°±â
+	// ìƒˆë¼ ë…ë¦½ì‹œí‚¤ê¸°
 	void independent(Point spawnPoint) {
+		Giraffe parent = (Giraffe) this;
 		this.breed = 0;
 		this.independence = 0;
 		this.isBreeded = false;
-		Giraffe newGiraffe = new Giraffe(this.field);
+		Giraffe newGiraffe = new Giraffe(this.field,parent.neck);
 		this.field.giraffes.add(newGiraffe);
 		newGiraffe.setLocation(spawnPoint);
 		newGiraffe.move();
@@ -139,20 +140,20 @@ public abstract class Subject extends JPanel {
 				sub.eatReady = false;
 				sub.isEating=true;
 				sub.isMove=false;
-				// ½Ä»ç ½Ã°£ 
+				// ì‹ì‚¬ ì‹œê°„ 
 				Thread.sleep(eatTime);
-				// Æ÷¸¸°¨ »ó½Â
+				// í¬ë§Œê° ìƒìŠ¹
 				sub.hungry += cal*ageRate;
-				// Æ÷¸¸°¨ ÃÖ´ë µµ´Ş 
+				// í¬ë§Œê° ìµœëŒ€ ë„ë‹¬ 
 				if (sub.hungry > 100*ageRate) {
 					sub.hungry = 100*ageRate;
 				}
-				// »õ³¢¸¦ ³ºÀº »óÅÂ¸é »õ³¢ ¼ºÀå
+				// ìƒˆë¼ë¥¼ ë‚³ì€ ìƒíƒœë©´ ìƒˆë¼ ì„±ì¥
 				if (sub.isBreeded) {
 					sub.independence+=1;
-					System.out.println("»õ³¢ ³ªÀÌ "+sub.independence);
+					System.out.println("ìƒˆë¼ ë‚˜ì´ "+sub.independence);
 				}
-				// »õ³¢°¡ ¼ºÃ¼±îÁö ¼ºÀåÇÏ¸é µ¶¸³½ÃÅ°±â
+				// ìƒˆë¼ê°€ ì„±ì²´ê¹Œì§€ ì„±ì¥í•˜ë©´ ë…ë¦½ì‹œí‚¤ê¸°
 				if (sub.independence >= sub.maxIndependence) {
 					sub.independent(sub.getLocation());
 				}
@@ -178,7 +179,7 @@ public abstract class Subject extends JPanel {
 		}
 		int getDirection(int lastDirection) {
 			int[] dirs = utils.getDetectableRange(lastDirection,2);
-			int[] probs = {12,29,71,88,100}; // È®·ü
+			int[] probs = {12,29,71,88,100}; // È®ï¿½ï¿½
 			int num = (int) (Math.random()*100+1);
 			// 40/35/25  12/29/71/88/100
 			for(int i=0; i<dirs.length; i++) {
@@ -191,9 +192,9 @@ public abstract class Subject extends JPanel {
 		}
 		void setDirection() {
 			this.distance = (int)(Math.random()*100)+200;
-			// ¸¶Áö¸· ¹æÇâÀÇ ½Ã¾ß ¹üÀ§ Ã£±â
+			// ë§ˆì§€ë§‰ ë°©í–¥ì˜ ì‹œì•¼ ë²”ìœ„ ì°¾ê¸°
 			this.direction = getDirection(sub.lastDirection);
-			// °´Ã¼ ÀÌ¹ÌÁö ¹İÀü
+			// ê°ì²´ ì´ë¯¸ì§€ ë°˜ì „
 			if ((this.direction!=Subject.ToUp)&&(this.direction!=Subject.ToDown)) {
 				if((this.direction<Subject.ToDown) && (sub.lastHeadDirection==Subject.ToRight)) {
 					sub.lastHeadDirection = Subject.ToLeft;			
@@ -436,12 +437,12 @@ public abstract class Subject extends JPanel {
 								sub.die();
 								break;
 							}
-							// Æ÷¸¸°¨ÀÌ Ã¤¿öÁö¸é Ãâ»ê ÁØºñ
+							// í¬ë§Œê°ì´ ì±„ì›Œì§€ë©´ ì¶œì‚° ì¤€ë¹„
 							if(!isBreeded) {
-								// Æ÷¸¸°¨ÀÌ ÀÏÁ¤ ÀÌ»ó ¿Ã¶ó°¡¸é Ãâ»ê ÁØºñ
+								// í¬ë§Œê°ì´ ì¼ì • ì´ìƒ ì˜¬ë¼ê°€ë©´ ì¶œì‚° ì¤€ë¹„
 								if(sub.hungry >= breedReadyValue*ageRate) {
 									sub.breed++;
-									// Ãâ»ê ÁØºñ°¡ Ã¤¿öÁö¸é Ãâ»ê
+									// ì¶œì‚° ì¤€ë¹„ê°€ ì±„ì›Œì§€ë©´ ì¶œì‚°
 									if(sub.breed > breedValue*ageRate) {
 										sub.setSize(sub.getWidth()*2,sub.getHeight());
 										sub.isBreeded = true;
@@ -451,7 +452,7 @@ public abstract class Subject extends JPanel {
 									sub.breed = 0;
 								}
 							}
-							// ¸ÔÀÌ Å½»ö
+							// ë¨¹ì´ íƒìƒ‰
 							if(sub.eatReady) {								
 								searchedFeed = searchFeed();
 								if(searchedFeed != null) {
