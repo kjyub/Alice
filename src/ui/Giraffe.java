@@ -19,6 +19,7 @@ public class Giraffe extends Subject{
 	Giraffe(GameField gf) {
 		super(gf,"GIRRAFE",gf.getFeeds(),50);
 		this.neck = DefaultNeck;
+//		this.neck = neckMutant(10);
 		this.setSize(new Dimension(150,130+(this.neck*NeckHeightUnit)));
 		this.resource = gf.getResource();
 		this.moveMotionThread = new Thread(new MoveMotionThread(this));
@@ -43,7 +44,7 @@ public class Giraffe extends Subject{
 	}
 	int neckMutant(int neck) {
 		int p = (int) (Math.random() * 10) + 1;
-		if (p>7) {
+		if (p>10-GameMain.mutantProb) {
 			int[] changes = {-1,-2,1,2};
 			int pick = (int) (Math.random() * 4);
 			return neck + changes[pick];
@@ -61,7 +62,7 @@ public class Giraffe extends Subject{
 	}
 	void eating() {
 		Thread thread = new Thread(new EatingMotionThread(this));
-		this.eat();
+//		this.eat();
 	}
 	void death() {
 		
@@ -150,17 +151,18 @@ public class Giraffe extends Subject{
 						e.printStackTrace();
 					}
 //					break;
-				}
-				g.bodyFrame++;
-				// 모션이 끝나면 0으로 다시 초기
-				if(g.bodyFrame == resource.bodyFrameCount) {
-					g.bodyFrame = 0;
-				}
-				g.repaint();
-				try {
-					Thread.sleep(66);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
+				} else {
+					g.bodyFrame++;
+					// 모션이 끝나면 0으로 다시 초기
+					if(g.bodyFrame == resource.bodyFrameCount) {
+						g.bodyFrame = 0;
+					}
+					g.repaint();
+					try {
+						Thread.sleep(66);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
 				}
 			}
 		}
@@ -192,6 +194,7 @@ public class Giraffe extends Subject{
 	}
 	
 	@Override
+
 	public void paintComponent(Graphics g) {
 		if (this.size == null) {
 			return;
@@ -213,31 +216,32 @@ public class Giraffe extends Subject{
 		    ((Graphics2D) g).setComposite(alphaComposite);
 		}
 		if (this.isBreeded) {
-			Image baby = resource.getBabyImg(bodyFrame);
+//			Image baby = resource.getBabyImg(bodyFrame);
+			Image baby = resource.getBabyImg(0);
 			g.drawString(
 				"번식 됨 ",
 				0, 90
 			);
 			if (this.isReflected) {
-				g.drawImage(head,this.size.width+(this.size.width/2),0,-this.size.width,this.size.height,this);
+				g.drawImage(head,this.size.width+(this.size.width/2),5,-this.size.width,this.size.height,this);
 				g.drawImage(neck,this.size.width+(this.size.width/2),0,-this.size.width,WithoutNeckHeight+(this.neck*NeckHeightUnit),this);
 				g.drawImage(body,this.size.width+(this.size.width/2),((this.neck-DefaultNeck)*NeckHeightUnit),-this.size.width,this.size.height,this);
 				g.drawImage(baby,this.size.width/2,this.size.height/2,-this.size.width/2,this.size.height/2,this);
 			} else {
-				g.drawImage(head,(this.size.width/2),0,this.size.width,this.size.height,this);
+				g.drawImage(head,(this.size.width/2),5,this.size.width,this.size.height,this);
 				g.drawImage(neck,(this.size.width/2),0,this.size.width,WithoutNeckHeight+(this.neck*NeckHeightUnit),this);
 				g.drawImage(body,(this.size.width/2),((this.neck-DefaultNeck)*NeckHeightUnit),this.size.width,this.size.height,this);
 				g.drawImage(baby,this.size.width+(this.size.width/2),this.size.height/2,this.size.width/2,this.size.height/2,this);
 			}
 		} else {
 			if (this.isReflected) {
-				g.drawImage(head,this.size.width,0,-this.size.width,this.size.height,this);
+				g.drawImage(head,this.size.width,5,-this.size.width,this.size.height,this);
 				g.drawImage(neck,this.size.width,0,-this.size.width,WithoutNeckHeight+(this.neck*NeckHeightUnit),this);
-				g.drawImage(body,this.size.width,((this.neck-DefaultNeck)*NeckHeightUnit),-this.size.width,this.size.height,this);
+				g.drawImage(body,this.size.width,((this.neck-DefaultNeck)*NeckHeightUnit)+10,-this.size.width,this.size.height,this);
 			} else {
-				g.drawImage(head,0,0,this.size.width,this.size.height,this);
+				g.drawImage(head,0,5,this.size.width,this.size.height,this);
 				g.drawImage(neck,0,0,this.size.width,WithoutNeckHeight+(this.neck*NeckHeightUnit),this);
-				g.drawImage(body,0,((this.neck-DefaultNeck)*NeckHeightUnit),this.size.width,this.size.height,this);
+				g.drawImage(body,0,((this.neck-DefaultNeck)*NeckHeightUnit)+10,this.size.width,this.size.height,this);
 			}
 		}
 		if (this.isDetected) {

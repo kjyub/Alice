@@ -5,11 +5,11 @@ import java.awt.Image;
 import libs.utils;
 
 public class GiraffeResource {
-	private String imgSrc = "src/resource/subjects/girrafe/";
+	private String imgSrc = "src/resource/subjects/girrafe01/";
 	public int headFrameCount = 1;
 	public int headEatFrameCount = 3;
 	public int neckFrameCount = 1;
-	public int bodyFrameCount = 4;
+	public int bodyFrameCount = 5;
 	public int babyFrameCount = 4;
 	private Image[] headImgs = new Image[headFrameCount];
 	private Image[] headEatImgs = new Image[headEatFrameCount];
@@ -28,7 +28,7 @@ public class GiraffeResource {
 			neckImgs[i] = utils.getImage(imgSrc+"neck"+Integer.toString(i)+".png");
 		}
 		for(int i=0; i<bodyFrameCount; i++) {
-			bodyImgs[i] = utils.getImage(imgSrc+"body"+Integer.toString(i)+".png");
+			bodyImgs[i] = utils.getImage(imgSrc+"body/"+Integer.toString(i)+".png");
 		}
 		for(int i=0; i<babyFrameCount; i++) {
 			babyImgs[i] = utils.getImage(imgSrc+"baby"+Integer.toString(i)+".png");

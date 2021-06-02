@@ -8,6 +8,8 @@ import java.awt.event.*;
 public class GameMain extends JFrame{
 
 	public static JLabel grfAmount = null;
+	public static int treeAverage = 11; // 나무의 평균 높이 (-+ 2) - 조정가능 
+	public static int mutantProb = 3; // 돌연변이 확률 (x10) 0~10 - 조정가능  
 	
 	GameField gameField = null;
 	
@@ -137,7 +139,7 @@ public class GameMain extends JFrame{
 				public void actionPerformed(ActionEvent e) {
 					for(int i=0;i<gf.giraffes.size();i++) {
 						Giraffe grf = gf.giraffes.get(i);
-						grf.eat();
+//						grf.eat();
 					}
 				}
 			});

@@ -19,12 +19,12 @@ public abstract class Subject extends JPanel {
 	final static int ToUpRight = 18;
 	final static Dimension DefaultSize = new Dimension(150,200);
 	
-	private static int searchWidth = 600;
-	private static int searchHeight = 200;
+	protected static int searchWidth = 600;
+	protected static int searchHeight = 200;
 
-	private int id;
-	private int lastDirection = 13;
-	private int lastHeadDirection = 13;
+	protected int id;
+	protected int lastDirection = 13;
+	protected int lastHeadDirection = 13;
 	
 	protected GameField field;
 	
@@ -34,17 +34,17 @@ public abstract class Subject extends JPanel {
 	protected int eatTime = 3000; // 먹이 먹는 시간
 	protected int eatCoolTime = 10*1000; // 먹이먹고 포만감 꺼지는 시간 - 조절 가능
 	protected boolean eatReady = true; // eatCoolTime 끝나는걸 알
-	protected int ageRate = 25; // (중요) 수치들 배수 - 조절 가능
+	protected int ageRate = 30; // (중요) 수치들 배수 - 조절 가능
 	protected int cal = 3*ageRate; // 칼로리, 포만감 상승 수치 (1~100)
 	protected int age = 0; // 
 	protected int hungry = 100*ageRate; // 초기 포만감 수치 (기본값 : 100*ageRate)
 	protected int breedReadyValue = 1;  // 몇번 먹이를 먹어야 출산을 할수 있는지 - 조절 가능
-	protected int breedValue = 10; // 0~100  조절 가능
+	protected int breedValue = 30; // 0~100  조절 가능
 	protected int breed = 0;
 	protected int maxIndependence = 2; // 조절 가능
 	protected int independence = 0;
 	protected Dimension size;
-	protected Vector<Subject> feeds = null;
+	protected Vector<Tree> feeds = null;
 	protected boolean isMove,isEating;
 	protected boolean isBreeded = false;
 	protected boolean isReflected = false;
@@ -53,7 +53,7 @@ public abstract class Subject extends JPanel {
 	protected Runnable moveMotionThread;
 	protected Runnable eatingMotionThread;
 	protected Runnable dieMotionThread;
-	Subject(GameField gf,String name, Vector<Subject> feeds,int speed) {
+	Subject(GameField gf,String name, Vector<Tree> feeds,int speed) {
 		this.field = gf;
 		this.name = name;
 		this.feeds = feeds;
@@ -81,7 +81,7 @@ public abstract class Subject extends JPanel {
 		motionThread.start();
 		this.isMove = true;
 	}
-	void eat() {
+	void eat(Subject feed) {
 		if (this.isEating) {
 			return;
 		} else {
@@ -89,7 +89,7 @@ public abstract class Subject extends JPanel {
 		}
 		this.isEating=true;
 		this.isMove=false;
-		Thread thread = new Thread(new EatThread(this));
+		Thread thread = new Thread(new EatThread(this,feed));
 		Thread motionThread = new Thread(eatingMotionThread);
 		thread.start();
 		motionThread.start();
@@ -131,8 +131,10 @@ public abstract class Subject extends JPanel {
 	
 	class EatThread implements Runnable {
 		Subject sub;
-		EatThread(Subject sub) {
+		Tree feed;
+		EatThread(Subject sub,Subject feed) {
 			this.sub = sub;
+			this.feed = (Tree)feed;
 		}
 		@Override
 		public void run() {
@@ -142,6 +144,7 @@ public abstract class Subject extends JPanel {
 				sub.isMove=false;
 				// 식사 시간 
 				Thread.sleep(eatTime);
+				feed.repaint();
 				// 포만감 상승
 				sub.hungry += cal*ageRate;
 				// 포만감 최대 도달 
@@ -170,12 +173,12 @@ public abstract class Subject extends JPanel {
 	}
 	
 	class MoveThread implements Runnable {
-		private Subject sub;
+		private Giraffe grf;
 		private int direction,distance;
 		private Dimension fieldSize = new Dimension(1650,1000);
 		private int feet = 1;
 		MoveThread(Subject sub) {
-			this.sub = sub;
+			this.grf = (Giraffe) sub;
 		}
 		int getDirection(int lastDirection) {
 			int[] dirs = utils.getDetectableRange(lastDirection,2);
@@ -193,78 +196,78 @@ public abstract class Subject extends JPanel {
 		void setDirection() {
 			this.distance = (int)(Math.random()*100)+200;
 			// 마지막 방향의 시야 범위 찾기
-			this.direction = getDirection(sub.lastDirection);
+			this.direction = getDirection(grf.lastDirection);
 			// 객체 이미지 반전
 			if ((this.direction!=Subject.ToUp)&&(this.direction!=Subject.ToDown)) {
-				if((this.direction<Subject.ToDown) && (sub.lastHeadDirection==Subject.ToRight)) {
-					sub.lastHeadDirection = Subject.ToLeft;			
-					sub.isReflected = !sub.isReflected;
-				} else if((this.direction>Subject.ToDown) && (sub.lastHeadDirection==Subject.ToLeft)) {
-					sub.lastHeadDirection = Subject.ToRight;			
-					sub.isReflected = !sub.isReflected;
+				if((this.direction<Subject.ToDown) && (grf.lastHeadDirection==Subject.ToRight)) {
+					grf.lastHeadDirection = Subject.ToLeft;			
+					grf.isReflected = !grf.isReflected;
+				} else if((this.direction>Subject.ToDown) && (grf.lastHeadDirection==Subject.ToLeft)) {
+					grf.lastHeadDirection = Subject.ToRight;			
+					grf.isReflected = !grf.isReflected;
 				}
 			}
-			sub.lastDirection = this.direction;
+			grf.lastDirection = this.direction;
 		}
 		void reverseDirection(int d) {
 			this.direction = d;
-			sub.lastDirection = d;
+			grf.lastDirection = d;
 			if (!((d==Subject.ToUp) || (d==Subject.ToUp))) {
-				sub.isReflected = !sub.isReflected;
-				if(sub.lastHeadDirection == Subject.ToLeft) {
-					sub.lastHeadDirection = Subject.ToRight;
+				grf.isReflected = !grf.isReflected;
+				if(grf.lastHeadDirection == Subject.ToLeft) {
+					grf.lastHeadDirection = Subject.ToRight;
 				} else {
-					sub.lastHeadDirection = Subject.ToLeft;
+					grf.lastHeadDirection = Subject.ToLeft;
 				}
 			}
 		}
 		void goWithCheckLimit() {
-			Point p = sub.getLocation();		
+			Point p = grf.getLocation();		
  			if (direction==ToUp) {
-				sub.setLocation(p.x, p.y-feet);
+ 				grf.setLocation(p.x, p.y-feet);
 				if(p.y < 0) {
 					reverseDirection(ToDown);
 				}
 			} else if (direction==ToDown) {
-				sub.setLocation(p.x, p.y+feet);
-				if(p.y > fieldSize.height-sub.getSize().height) {
+				grf.setLocation(p.x, p.y+feet);
+				if(p.y > fieldSize.height-grf.getSize().height) {
 					reverseDirection(ToUp);
 				}
 			} else if (direction==ToLeft) {
-				sub.setLocation(p.x-feet, p.y);
+				grf.setLocation(p.x-feet, p.y);
 				if(p.x < 0) {
 					reverseDirection(ToRight);
 				}
 			} else if (direction==ToRight) {
-				sub.setLocation(p.x+feet, p.y);
-				if(p.x > fieldSize.width-sub.getSize().width) {
+				grf.setLocation(p.x+feet, p.y);
+				if(p.x > fieldSize.width-grf.getSize().width) {
 					reverseDirection(ToLeft);
 				}
 			} else if (direction==ToUpLeft) {
-				sub.setLocation(p.x-feet, p.y-feet);
+				grf.setLocation(p.x-feet, p.y-feet);
 				if(p.y < 0 || p.x < 0) {
 					reverseDirection(ToDownRight);
 				}
 			} else if (direction==ToUpRight) {
-				sub.setLocation(p.x+feet, p.y-feet);
-				if(p.y < 0 || p.x > fieldSize.width-sub.getSize().width) {
+				grf.setLocation(p.x+feet, p.y-feet);
+				if(p.y < 0 || p.x > fieldSize.width-grf.getSize().width) {
 					reverseDirection(ToDownLeft);
 				}
 			} else if (direction==ToDownLeft) {
-				sub.setLocation(p.x-feet, p.y+feet);
-				if(p.y > fieldSize.height-sub.getSize().height || p.x < 0) {
+				grf.setLocation(p.x-feet, p.y+feet);
+				if(p.y > fieldSize.height-grf.getSize().height || p.x < 0) {
 					reverseDirection(ToUpRight);
 				}
 			} else if (direction==ToDownRight) {
-				sub.setLocation(p.x+feet, p.y+feet);
-				if(p.y > fieldSize.height-sub.getSize().height || p.x > fieldSize.width-sub.getSize().width) {
+				grf.setLocation(p.x+feet, p.y+feet);
+				if(p.y > fieldSize.height-grf.getSize().height || p.x > fieldSize.width-grf.getSize().width) {
 					reverseDirection(ToUpLeft);
 				}
 			}
 		}
 		
 		boolean searchVertical(int d,Point treeP) {
-			Point center = sub.getCenterPoint();
+			Point center = grf.getCenterPoint();
 			if (treeP.getY() >= (center.getY() - (searchWidth/2)) && treeP.getY() <= (center.getY() + (searchWidth/2))) {
 				if (d>0) {
 					if(treeP.getX() >= center.getX() && treeP.getX() <= center.getX() + searchHeight) {
@@ -279,7 +282,7 @@ public abstract class Subject extends JPanel {
 			return false;
 		}
 		boolean searchHorizon(int d,Point treeP) {
-			Point center = sub.getCenterPoint();
+			Point center = grf.getCenterPoint();
 			if(treeP.getX() >= (center.getX() - (searchWidth/2)) && treeP.getX() <= (center.getX() + (searchWidth/2))) {
 				if (d>0) {
 					if (treeP.getY() >= center.getY() && treeP.getY() <= center.getY() + searchHeight) {
@@ -294,17 +297,20 @@ public abstract class Subject extends JPanel {
 			return false;
 		}
 		Subject searchFeed() {
-			if (sub.isDetected) {
-				Point center = sub.getCenterPoint();
+			if (grf.isDetected) {
+				Point center = grf.getCenterPoint();
 				if (center.getX() <= 800-(searchHeight/2) && center.getX() >= 800+(searchHeight/2)) {
-					sub.isDetected = false;
+					grf.isDetected = false;
 				}
 				if (center.getY() <= 600-(searchWidth/2) && center.getY() >= 600+(searchWidth/2)) {
-					sub.isDetected = false;
+					grf.isDetected = false;
 				}
 			}
 			boolean isFind = false;
-			for (Subject feed : feeds) {
+			for (Tree feed : feeds) {
+				if (grf.neck < feed.length-1) {
+					return null;
+				}
 				Point feedP = new Point(feed.getX()+(feed.getWidth()/2),feed.getY()+(feed.getHeight()/2));
 				if (direction == ToUp) {
 					isFind = searchHorizon(-1,feedP);
@@ -316,37 +322,50 @@ public abstract class Subject extends JPanel {
 					isFind = searchVertical(1,feedP);
 				}
 				if (isFind) {
-					sub.isDetected = true;
+					grf.isDetected = true;
+					Object[] leafHeights = feed.leafs.keySet().toArray();
+					for (int i=leafHeights.length-1; i>-1;i--) {
+						int height = (int) leafHeights[i];
+						int leaf = feed.leafs.get(height);
+						System.out.println(height);
+						if (grf.neck >= height && leaf > 0) {
+							feed.leafs.put(height, leaf - 1);
+							feed.repaint();
+							break;
+						} else {
+							System.out.println("Too Long ,"+grf.neck +","+ height);
+						}
+					}
 					return feed;
 				}
 			}
-			sub.isDetected = false;
+			grf.isDetected = false;
 			return null;
 		}
 		void toFeedX(int xd,Subject feed) {
 			int xdd ;
 			if (xd>0) {
-				if(sub.lastHeadDirection == Subject.ToLeft) {
-					sub.isReflected = !sub.isReflected;
+				if(grf.lastHeadDirection == Subject.ToLeft) {
+					grf.isReflected = !grf.isReflected;
 				}
-				sub.lastHeadDirection = Subject.ToRight;
+				grf.lastHeadDirection = Subject.ToRight;
 				xdd = 1;
 			} else if (xd < 0) {
-				if(sub.lastHeadDirection == Subject.ToRight) {
-					sub.isReflected = !sub.isReflected;
+				if(grf.lastHeadDirection == Subject.ToRight) {
+					grf.isReflected = !grf.isReflected;
 				}
-				sub.lastHeadDirection = Subject.ToLeft;
+				grf.lastHeadDirection = Subject.ToLeft;
 				xdd = -1;
 			} else {
 				xdd = 0;
 			}
 			for(int i=0; i<(Math.abs(xd)/feet); i++) {
 				try {
-					if(!sub.isMove) {
+					if(!grf.isMove) {
 						break;
 					}
-					Point p = sub.getLocation();
-					sub.setLocation(p.x+(feet*xdd),p.y);
+					Point p = grf.getLocation();
+					grf.setLocation(p.x+(feet*xdd),p.y);
 					Thread.sleep(1000/speed);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
@@ -357,11 +376,11 @@ public abstract class Subject extends JPanel {
 			int ydd = (yd > 0) ? 1 : -1;
 			for(int i=0; i<(Math.abs(yd)/feet); i++) {
 				try {
-					if(!sub.isMove) {
+					if(!grf.isMove) {
 						break;
 					}
-					Point p = sub.getLocation();
-					sub.setLocation(p.x,p.y+(feet*ydd));
+					Point p = grf.getLocation();
+					grf.setLocation(p.x,p.y+(feet*ydd));
 					Thread.sleep(1000/speed);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
@@ -370,7 +389,7 @@ public abstract class Subject extends JPanel {
 		}
 		void toFeed(Subject feed) {
 			boolean feedSideLeft = true;
-			Point subCenter = sub.getCenterPoint();
+			Point subCenter = grf.getCenterPoint();
 			int xd;
 			if (feed.getX()+(feed.getWidth()/2) > subCenter.getX()) {
 				xd = (int) (feed.getX()-subCenter.getX()-(feed.getWidth()/2));
@@ -378,7 +397,7 @@ public abstract class Subject extends JPanel {
 				feedSideLeft = false;
 				xd = (int) ((feed.getX()+feed.getWidth())-subCenter.getX());
 			}
-			int yd = (feed.getY()-sub.getY());
+			int yd = (feed.getY()-grf.getY());
 			if (Math.abs(yd)>Math.abs(xd)) {
 				toFeedY(yd,feed);
 				toFeedX(xd,feed);
@@ -404,60 +423,60 @@ public abstract class Subject extends JPanel {
 //				}
 			}
 			if (feedSideLeft) {
-				if(sub.lastHeadDirection == Subject.ToLeft) {
-					sub.isReflected = !sub.isReflected;
+				if(grf.lastHeadDirection == Subject.ToLeft) {
+					grf.isReflected = !grf.isReflected;
 				}
-				sub.lastHeadDirection = Subject.ToRight;
+				grf.lastHeadDirection = Subject.ToRight;
 			} else {
-				if(sub.lastHeadDirection == Subject.ToRight) {
-					sub.isReflected = !sub.isReflected;
+				if(grf.lastHeadDirection == Subject.ToRight) {
+					grf.isReflected = !grf.isReflected;
 				}
-				sub.lastHeadDirection = Subject.ToLeft;
+				grf.lastHeadDirection = Subject.ToLeft;
 			}
-			sub.eat();
+			grf.eat(feed);
 		}
 		@Override
 		public synchronized void run() {
 			while(true) {
 				Subject searchedFeed = null;
-				if (sub.died) {
-					sub.isMove=false;
+				if (grf.died) {
+					grf.isMove=false;
 					break;
 				}
-				if(sub.isMove) {
+				if(grf.isMove) {
 					setDirection();
 					for(int i=1; i<distance+1; i++) {
 						try {
-							if(!sub.isMove) {
+							if(!grf.isMove) {
 								break;
 							}
 							goWithCheckLimit();
-							sub.hungry--;
-							if(sub.hungry <= 0 && !sub.died) {
-								sub.die();
+							grf.hungry--;
+							if(grf.hungry <= 0 && !grf.died) {
+								grf.die();
 								break;
 							}
 							// 포만감이 채워지면 출산 준비
 							if(!isBreeded) {
 								// 포만감이 일정 이상 올라가면 출산 준비
-								if(sub.hungry >= breedReadyValue*ageRate) {
-									sub.breed++;
+								if(grf.hungry >= breedReadyValue*ageRate) {
+									grf.breed++;
 									// 출산 준비가 채워지면 출산
-									if(sub.breed > breedValue*ageRate) {
-										sub.setSize(sub.getWidth()*2,sub.getHeight());
-										sub.isBreeded = true;
-										sub.breed = 0;
+									if(grf.breed > breedValue*ageRate) {
+										grf.setSize(grf.getWidth()*2,grf.getHeight());
+										grf.isBreeded = true;
+										grf.breed = 0;
 									}
 								} else {
-									sub.breed = 0;
+									grf.breed = 0;
 								}
 							}
 							// 먹이 탐색
-							if(sub.eatReady) {								
+							if(grf.eatReady) {								
 								searchedFeed = searchFeed();
 								if(searchedFeed != null) {
 									toFeed(searchedFeed);
-									Thread.sleep(sub.eatTime);
+									Thread.sleep(grf.eatTime);
 									break;
 								}
 							}

@@ -6,15 +6,15 @@ import java.awt.*;
 
 public class GameField extends JPanel {
 	public Vector<Giraffe> giraffes = new Vector<Giraffe>();
-	public Vector<Subject> trees = new Vector<Subject>();
+	public Vector<Tree> trees = new Vector<Tree>();
 	
 	private GiraffeResource gSrc = null;
 	private TreeResource tSrc = null;
 	GameField(int sizeX,int sizeY) {
 		int paddingSize = 20;
 		this.setLocation(paddingSize, paddingSize);
-//		this.setBackground(new Color(0xEFE9BB));
-		this.setBackground(Color.WHITE);
+		this.setBackground(new Color(0xf59342));
+//		this.setBackground(Color.);
 		this.setLayout(null);
 		gSrc = new GiraffeResource();
 		tSrc = new TreeResource();
@@ -43,7 +43,7 @@ public class GameField extends JPanel {
 	GiraffeResource getResource() {
 		return this.gSrc;
 	}
-	Vector<Subject> getFeeds() {
+	Vector<Tree> getFeeds() {
 		return this.trees;
 	}
 }
