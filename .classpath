@@ -5,7 +5,9 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="src" path="resource.subjects.girrafe01"/>
+	<classpathentry excluding="resource/" kind="src" path="src"/>
+	<classpathentry kind="src" path="src/resource"/>
+	<classpathentry kind="src" path="resource/subjects/giraffe01"/>
+	<classpathentry kind="src" path="resource/subjects/tree"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

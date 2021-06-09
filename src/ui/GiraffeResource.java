@@ -5,12 +5,22 @@ import java.awt.Image;
 import libs.utils;
 
 public class GiraffeResource {
-	private String imgSrc = "src/resource/subjects/girrafe01/";
+	private String imgSrc = "resource/subjects/giraffe01/";
 	public int headFrameCount = 1;
 	public int headEatFrameCount = 3;
 	public int neckFrameCount = 1;
-	public int bodyFrameCount = 5;
+	public int bodyFrameCount = 15;
 	public int babyFrameCount = 4;
+	
+	public static final int TotalWidth = (int) (150 * GameMain.sizeScale);
+	public static final int TotalHeight = (int) (200 * GameMain.sizeScale);
+	public static final int HeadHeight = (int) (37 * GameMain.sizeScale);
+	public static final int NeckHeight = (int) (45 * GameMain.sizeScale);
+	public static final int BodyHeight = (int) (118 * GameMain.sizeScale);
+
+	public static final int NeckHeightUnit = (int) (10 * GameMain.sizeScale);
+	public static final int WithoutNeckHeight = (int) (150 * GameMain.sizeScale);
+	
 	private Image[] headImgs = new Image[headFrameCount];
 	private Image[] headEatImgs = new Image[headEatFrameCount];
 	private Image[] neckImgs = new Image[neckFrameCount];
@@ -28,7 +38,7 @@ public class GiraffeResource {
 			neckImgs[i] = utils.getImage(imgSrc+"neck"+Integer.toString(i)+".png");
 		}
 		for(int i=0; i<bodyFrameCount; i++) {
-			bodyImgs[i] = utils.getImage(imgSrc+"body/"+Integer.toString(i)+".png");
+			bodyImgs[i] = utils.getImage(imgSrc+"body3/"+Integer.toString(i)+".png");
 		}
 		for(int i=0; i<babyFrameCount; i++) {
 			babyImgs[i] = utils.getImage(imgSrc+"baby"+Integer.toString(i)+".png");

@@ -14,6 +14,9 @@ public class utils {
 		ImageIcon g = new ImageIcon(src);
 		return g.getImage();
 	}
+	public Point getCenterPoint(int x, int y, int width, int height) {
+		return new Point(x+(width/2),y+(height/2));
+	}
 	public static int[] getDetectableRange(int sd,int range) {
 		int[] values = new int[1+(range*2)];
 		int v_cnt = 0;

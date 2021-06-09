@@ -7,10 +7,8 @@ import libs.utils;
 
 public class Giraffe extends Subject{
 	GiraffeResource resource;
+	public final int DefaultNeck = 10;
 	protected int neck;
-	private static final int DefaultNeck = 10;
-	private static final int NeckHeightUnit = 7;
-	private static final int WithoutNeckHeight = 150;
 	protected int headFrame = 0;
 	protected int neckFrame = 0;
 	protected int bodyFrame = 0;
@@ -18,39 +16,47 @@ public class Giraffe extends Subject{
 	private AlphaComposite alphaComposite;
 	Giraffe(GameField gf) {
 		super(gf,"GIRRAFE",gf.getFeeds(),50);
-		this.neck = DefaultNeck;
-//		this.neck = neckMutant(10);
-		this.setSize(new Dimension(150,130+(this.neck*NeckHeightUnit)));
+
+		this.neck = neckMutant(10);
+//		this.neck = DefaultNeck;
+		this.setSize(new Dimension(resource.TotalWidth,
+				(resource.HeadHeight+resource.BodyHeight+this.getNeckHeight())
+				));
 		this.resource = gf.getResource();
 		this.moveMotionThread = new Thread(new MoveMotionThread(this));
 		this.eatingMotionThread = new Thread(new EatingMotionThread(this));
 		this.dieMotionThread = new Thread(new DieMotionThread(this));
 		explore();
-		updateAmount(gf);
+		gf.giraffes.add(this);
+		gf.updateAmount();
 	}
 	Giraffe(GameField gf,int gene) {
 		super(gf,"GIRRAFE",gf.getFeeds(),50);
 		this.neck = neckMutant(gene);
-		this.setSize(new Dimension(150,130+(this.neck*NeckHeightUnit)));
+		this.setSize(new Dimension(resource.TotalWidth,
+				(resource.HeadHeight+resource.BodyHeight+this.getNeckHeight())
+				));
 		this.resource = gf.getResource();
 		this.moveMotionThread = new Thread(new MoveMotionThread(this));
 		this.eatingMotionThread = new Thread(new EatingMotionThread(this));
 		this.dieMotionThread = new Thread(new DieMotionThread(this));
 		explore();
-		updateAmount(gf);
-	}
-	void updateAmount(GameField gf) {
-		GameMain.grfAmount.setText(Integer.toString(gf.giraffes.size()+1));
+		gf.giraffes.add(this);
+		gf.updateAmount();
 	}
 	int neckMutant(int neck) {
 		int p = (int) (Math.random() * 10) + 1;
 		if (p>10-GameMain.mutantProb) {
 			int[] changes = {-1,-2,1,2};
+//			int[] changes = {-3,-6,3,6};
 			int pick = (int) (Math.random() * 4);
 			return neck + changes[pick];
 		} else {
 			return neck;
 		}
+	}
+	int getNeckHeight() {
+		return (resource.NeckHeight+((this.neck-DefaultNeck)*resource.NeckHeightUnit));
 	}
 	void explore() {
 		Thread thread = new Thread(new ExploreThread(this));
@@ -159,7 +165,7 @@ public class Giraffe extends Subject{
 					}
 					g.repaint();
 					try {
-						Thread.sleep(66);
+						Thread.sleep(80);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
@@ -194,7 +200,6 @@ public class Giraffe extends Subject{
 	}
 	
 	@Override
-
 	public void paintComponent(Graphics g) {
 		if (this.size == null) {
 			return;
@@ -215,55 +220,69 @@ public class Giraffe extends Subject{
 			g = (Graphics2D)g;
 		    ((Graphics2D) g).setComposite(alphaComposite);
 		}
-		if (this.isBreeded) {
-//			Image baby = resource.getBabyImg(bodyFrame);
-			Image baby = resource.getBabyImg(0);
+		g.setFont(new Font("굴림체",Font.PLAIN,10));
+		int neckX = 2;
+		int neckHeight = this.getNeckHeight();
+		int bodyY = resource.HeadHeight + neckHeight;
+		if (this.isReflected) {
+			g.drawImage(head,resource.TotalWidth,0,-resource.TotalWidth,resource.HeadHeight,this);
+			g.drawImage(neck,resource.TotalWidth-neckX,resource.HeadHeight,-resource.TotalWidth,neckHeight,this);
+			g.drawImage(body,resource.TotalWidth,bodyY,-resource.TotalWidth,resource.BodyHeight,this);
+			if (this.isBreeded) {
+				int babyX = resource.TotalWidth/2;
+				int babyY = resource.TotalHeight/2;
+				g.drawImage(head,babyX+resource.TotalWidth,babyY+0,-resource.TotalWidth/2,resource.HeadHeight/2,this);
+				g.drawImage(neck,babyX+resource.TotalWidth-neckX,babyY+(resource.HeadHeight/2),-resource.TotalWidth/2,neckHeight/2,this);
+				g.drawImage(body,babyX+resource.TotalWidth,babyY+(bodyY/2),-resource.TotalWidth/2,resource.BodyHeight/2,this);
+				//g.drawImage(baby,resource.TotalWidth/2,resource.TotalHeight/2,-resource.TotalWidth/2,resource.TotalHeight/2,this);
+			}
+		} else {
+			g.drawImage(head,0,0,resource.TotalWidth,resource.HeadHeight,this);
+			g.drawImage(neck,0+neckX,resource.HeadHeight,resource.TotalWidth,neckHeight,this);
+			g.drawImage(body,0,bodyY,resource.TotalWidth,resource.BodyHeight,this);
+			if (this.isBreeded) {
+				int babyX = (int) (resource.TotalWidth);
+				int babyY = resource.TotalHeight/2;
+				g.drawImage(head,babyX+0,babyY+0,resource.TotalWidth/2,resource.HeadHeight/2,this);
+				g.drawImage(neck,babyX+0+neckX,babyY+(resource.HeadHeight/2),resource.TotalWidth/2,neckHeight/2,this);
+				g.drawImage(body,babyX+0,babyY+(bodyY/2),resource.TotalWidth/2,resource.BodyHeight/2,this);
+				//g.drawImage(baby,(int) (resource.TotalWidth*(1.5)),resource.TotalHeight/2,resource.TotalWidth/2,resource.TotalHeight/2,this);
+			}
+		}
+		if (GameMain.subjectInfo) {
+			if (this.isDetected) {
+				g.setColor(Color.RED);
+				g.drawString("먹이 발견 !!", 0, 40);
+			}
+			if (this.eatReady) {
+				g.setColor(Color.BLUE);
+				g.drawString("식사 준비 !!", 0, 50);
+			} else {
+				g.setColor(Color.BLUE);
+				g.drawString("식사 대기 !!", 0, 50);
+			}
+			if (this.isBreeded) {
+//				Image baby = resource.getBabyImg(bodyFrame);
+				Image baby = resource.getBabyImg(0);
+				g.drawString(
+					"번식 됨 ",
+					0, 90
+				);
+			}
+			g.setColor(Color.black);
+//			g.drawString(
+//				"X,Y : "+this.getCenterPoint().x+","+this.getCenterPoint().y,
+//				0, 10
+//			);
+			g.drawString("목 : "+this.neck, 0, 10);
 			g.drawString(
-				"번식 됨 ",
-				0, 90
+				"배고픔 : "+this.hungry,
+				0, 20
 			);
-			if (this.isReflected) {
-				g.drawImage(head,this.size.width+(this.size.width/2),5,-this.size.width,this.size.height,this);
-				g.drawImage(neck,this.size.width+(this.size.width/2),0,-this.size.width,WithoutNeckHeight+(this.neck*NeckHeightUnit),this);
-				g.drawImage(body,this.size.width+(this.size.width/2),((this.neck-DefaultNeck)*NeckHeightUnit),-this.size.width,this.size.height,this);
-				g.drawImage(baby,this.size.width/2,this.size.height/2,-this.size.width/2,this.size.height/2,this);
-			} else {
-				g.drawImage(head,(this.size.width/2),5,this.size.width,this.size.height,this);
-				g.drawImage(neck,(this.size.width/2),0,this.size.width,WithoutNeckHeight+(this.neck*NeckHeightUnit),this);
-				g.drawImage(body,(this.size.width/2),((this.neck-DefaultNeck)*NeckHeightUnit),this.size.width,this.size.height,this);
-				g.drawImage(baby,this.size.width+(this.size.width/2),this.size.height/2,this.size.width/2,this.size.height/2,this);
-			}
-		} else {
-			if (this.isReflected) {
-				g.drawImage(head,this.size.width,5,-this.size.width,this.size.height,this);
-				g.drawImage(neck,this.size.width,0,-this.size.width,WithoutNeckHeight+(this.neck*NeckHeightUnit),this);
-				g.drawImage(body,this.size.width,((this.neck-DefaultNeck)*NeckHeightUnit)+10,-this.size.width,this.size.height,this);
-			} else {
-				g.drawImage(head,0,5,this.size.width,this.size.height,this);
-				g.drawImage(neck,0,0,this.size.width,WithoutNeckHeight+(this.neck*NeckHeightUnit),this);
-				g.drawImage(body,0,((this.neck-DefaultNeck)*NeckHeightUnit)+10,this.size.width,this.size.height,this);
-			}
+			g.drawString("번식 : "+this.breed, 0, 30);
+			g.drawRect(0, 0, this.getWidth()-1, this.getHeight()-1);
 		}
-		if (this.isDetected) {
-			g.setColor(Color.RED);
-			g.drawString("먹이 발견 !!", 0, 50);
-		}
-		if (this.eatReady) {
-			g.setColor(Color.BLUE);
-			g.drawString("식사 준비 !!", 0, 70);
-		} else {
-			g.setColor(Color.BLUE);
-			g.drawString("식사 대기 !!", 0, 70);
-		}
-		g.setColor(Color.black);
-		g.drawString(
-			"X,Y : "+this.getCenterPoint().x+","+this.getCenterPoint().y+", 목 : "+this.neck,
-			0, 10
-		);
-		g.drawString(
-			"배고픔 : "+this.hungry+",번식 : "+this.breed,
-			0, 30
-		);
+		
 	}
 	@Override
 	public String toString() {

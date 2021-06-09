@@ -5,7 +5,7 @@ import libs.utils;
 
 import java.awt.*;
 import java.awt.color.*;
-import java.util.Vector;
+import java.util.*;
 
 public abstract class Subject extends JPanel {
 	final static int ToStop = 10;
@@ -19,10 +19,12 @@ public abstract class Subject extends JPanel {
 	final static int ToUpRight = 18;
 	final static Dimension DefaultSize = new Dimension(150,200);
 	
-	protected static int searchWidth = 600;
-	protected static int searchHeight = 200;
+	public static int searchScale = 10; // 먹이 탐색 범위 - 조절 가능
+	protected static int searchWidth = 60 * searchScale;
+	protected static int searchHeight = 20 * searchScale;
 
 	protected int id;
+	protected Date birthDate;
 	protected int lastDirection = 13;
 	protected int lastHeadDirection = 13;
 	
@@ -34,14 +36,14 @@ public abstract class Subject extends JPanel {
 	protected int eatTime = 3000; // 먹이 먹는 시간
 	protected int eatCoolTime = 10*1000; // 먹이먹고 포만감 꺼지는 시간 - 조절 가능
 	protected boolean eatReady = true; // eatCoolTime 끝나는걸 알
-	protected int ageRate = 30; // (중요) 수치들 배수 - 조절 가능
+	protected static int ageRate = 10; // (중요) 수치들 배수 - 조절 가능
 	protected int cal = 3*ageRate; // 칼로리, 포만감 상승 수치 (1~100)
 	protected int age = 0; // 
 	protected int hungry = 100*ageRate; // 초기 포만감 수치 (기본값 : 100*ageRate)
-	protected int breedReadyValue = 1;  // 몇번 먹이를 먹어야 출산을 할수 있는지 - 조절 가능
-	protected int breedValue = 30; // 0~100  조절 가능
+	protected static int breedReadyValue = 1;  // 몇번 먹이를 먹어야 출산을 할수 있는지 - 조절 가능
+	protected static int breedValue = 50; // 0~100  조절 가능
 	protected int breed = 0;
-	protected int maxIndependence = 2; // 조절 가능
+	protected static int maxIndependence = 2; // 조절 가능
 	protected int independence = 0;
 	protected Dimension size;
 	protected Vector<Tree> feeds = null;
@@ -59,6 +61,9 @@ public abstract class Subject extends JPanel {
 		this.feeds = feeds;
 		this.speed = speed;
 		this.size = DefaultSize;
+		this.birthDate = new Date();
+		gf.maxGiraffeID += 1;
+		this.id = gf.maxGiraffeID;
 		this.setSize(DefaultSize);
 		this.setBackground(null);
 		this.setOpaque(false);
@@ -90,9 +95,9 @@ public abstract class Subject extends JPanel {
 		this.isEating=true;
 		this.isMove=false;
 		Thread thread = new Thread(new EatThread(this,feed));
-		Thread motionThread = new Thread(eatingMotionThread);
+//		Thread motionThread = new Thread(eatingMotionThread);
 		thread.start();
-		motionThread.start();
+//		motionThread.start();
 	};
 	abstract void death();
 	abstract void breeding();
@@ -105,6 +110,11 @@ public abstract class Subject extends JPanel {
 	void setCal(int cal) {
 		this.cal = cal;
 	}
+	void breed() {
+		this.setSize((int)(this.getWidth()*1.5),this.getHeight());
+		this.isBreeded = true;
+		this.breed = 0;
+	}
 	void die() {
 		if(this.died) {
 			return;
@@ -112,6 +122,8 @@ public abstract class Subject extends JPanel {
 		this.died = true;
 		this.isMove = false;
 		this.repaint();
+		this.field.giraffes.remove(this);
+		this.field.updateAmount();
 		Thread motionThread = new Thread(dieMotionThread);
 		motionThread.start();
 	}
@@ -122,10 +134,10 @@ public abstract class Subject extends JPanel {
 		this.independence = 0;
 		this.isBreeded = false;
 		Giraffe newGiraffe = new Giraffe(this.field,parent.neck);
-		this.field.giraffes.add(newGiraffe);
 		newGiraffe.setLocation(spawnPoint);
 		newGiraffe.move();
 		this.field.add(newGiraffe);
+		this.setSize(this.getWidth()*(2/3),this.getHeight());
 		this.field.repaint();
 	}
 	
@@ -175,7 +187,7 @@ public abstract class Subject extends JPanel {
 	class MoveThread implements Runnable {
 		private Giraffe grf;
 		private int direction,distance;
-		private Dimension fieldSize = new Dimension(1650,1000);
+		private Dimension fieldSize = field.getSize();
 		private int feet = 1;
 		MoveThread(Subject sub) {
 			this.grf = (Giraffe) sub;
@@ -395,7 +407,7 @@ public abstract class Subject extends JPanel {
 				xd = (int) (feed.getX()-subCenter.getX()-(feed.getWidth()/2));
 			} else {
 				feedSideLeft = false;
-				xd = (int) ((feed.getX()+feed.getWidth())-subCenter.getX());
+				xd = (int) ((feed.getX()+feed.getWidth())-subCenter.getX())+(feed.getWidth()/2);
 			}
 			int yd = (feed.getY()-grf.getY());
 			if (Math.abs(yd)>Math.abs(xd)) {
@@ -463,9 +475,7 @@ public abstract class Subject extends JPanel {
 									grf.breed++;
 									// 출산 준비가 채워지면 출산
 									if(grf.breed > breedValue*ageRate) {
-										grf.setSize(grf.getWidth()*2,grf.getHeight());
-										grf.isBreeded = true;
-										grf.breed = 0;
+										grf.breed();
 									}
 								} else {
 									grf.breed = 0;
