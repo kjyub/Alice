@@ -1,11 +1,11 @@
 package ui;
-import javax.swing.*;
 
 import libs.utils;
 
 import java.awt.*;
 import java.awt.color.*;
 import java.util.*;
+import javax.swing.*;
 
 public abstract class Subject extends JPanel {
 	final static int ToStop = 10;
@@ -19,52 +19,43 @@ public abstract class Subject extends JPanel {
 	final static int ToUpRight = 18;
 	final static Dimension DefaultSize = new Dimension(150,200);
 	
-	public static int searchScale = 10; // 먹이 탐색 범위 - 조절 가능
-	protected static int searchWidth = 60 * searchScale;
-	protected static int searchHeight = 20 * searchScale;
-
-	protected int id;
-	protected Date birthDate;
-	protected int lastDirection = 13;
-	protected int lastHeadDirection = 13;
-	
 	protected GameField field;
-	
-	protected String name;
-	protected String feed;
-	protected int speed = 1;
-	protected int eatTime = 3000; // 먹이 먹는 시간
-	protected int eatCoolTime = 10*1000; // 먹이먹고 포만감 꺼지는 시간 - 조절 가능
-	protected boolean eatReady = true; // eatCoolTime 끝나는걸 알
-	protected static int ageRate = 10; // (중요) 수치들 배수 - 조절 가능
-	protected int cal = 3*ageRate; // 칼로리, 포만감 상승 수치 (1~100)
-	protected int age = 0; // 
-	protected int hungry = 100*ageRate; // 초기 포만감 수치 (기본값 : 100*ageRate)
-	protected static int breedReadyValue = 1;  // 몇번 먹이를 먹어야 출산을 할수 있는지 - 조절 가능
-	protected static int breedValue = 50; // 0~100  조절 가능
-	protected int breed = 0;
-	protected static int maxIndependence = 2; // 조절 가능
-	protected int independence = 0;
 	protected Dimension size;
 	protected Vector<Tree> feeds = null;
+	protected Runnable moveMotionThread;
+	protected Runnable eatingMotionThread;
+	protected Runnable dieMotionThread;
+
+	// 상태 값들 - db 저장
+	protected int id;
+	protected String birthDate;
+	protected int lastDirection = 13;
+	protected int lastHeadDirection = 13;
+	protected int hungry = 100*GameField.ageRate; // 초기 포만감 수치 (기본값 : 100*ageRate)
+	protected int breed = 0;
+	protected int independence = 0;
 	protected boolean isMove,isEating;
 	protected boolean isBreeded = false;
 	protected boolean isReflected = false;
 	protected boolean isDetected = false;
 	protected boolean died = false;
-	protected Runnable moveMotionThread;
-	protected Runnable eatingMotionThread;
-	protected Runnable dieMotionThread;
-	Subject(GameField gf,String name, Vector<Tree> feeds,int speed) {
+
+	// 설정 값들 - 변경 불가
+	protected int speed = 1;
+	protected int eatCoolTime = 10*1000; // 먹이먹고 포만감 꺼지는 시간 - 조절 가능
+	protected boolean eatReady = true; // eatCoolTime 끝나는걸 알
+	protected int cal = 3*GameField.ageRate; // 칼로리, 포만감 상승 수치 (1~100)
+	protected int age = 0; // 
+	protected static int searchWidth = 60 * GameField.searchScale;
+	protected static int searchHeight = 20 * GameField.searchScale;
+	public static int eatTime = 3000; // 먹이 먹는 시간
+	
+	Subject(GameField gf, Vector<Tree> feeds,int speed) {
 		this.field = gf;
-		this.name = name;
 		this.feeds = feeds;
 		this.speed = speed;
 		this.size = DefaultSize;
-		this.birthDate = new Date();
-		gf.maxGiraffeID += 1;
-		this.id = gf.maxGiraffeID;
-		this.setSize(DefaultSize);
+		this.birthDate = GameField.getTimeStampToString();
 		this.setBackground(null);
 		this.setOpaque(false);
 		this.setVisible(true);
@@ -79,6 +70,14 @@ public abstract class Subject extends JPanel {
 		} else {
 			isMove = true;
 		}
+		MoveThread threadex = new MoveThread(this);
+		Thread thread = new Thread(threadex);
+		Thread motionThread = new Thread(moveMotionThread);
+		thread.start();
+		motionThread.start();
+		this.isMove = true;
+	}
+	void move_force() {
 		MoveThread threadex = new MoveThread(this);
 		Thread thread = new Thread(threadex);
 		Thread motionThread = new Thread(moveMotionThread);
@@ -105,13 +104,13 @@ public abstract class Subject extends JPanel {
 		this.speed = speed;
 	}
 	void setAgeRate(int rate) {
-		this.ageRate = rate;
+		GameField.ageRate = rate;
 	}
 	void setCal(int cal) {
 		this.cal = cal;
 	}
 	void breed() {
-		this.setSize((int)(this.getWidth()*1.5),this.getHeight());
+		this.setSize((int)(GiraffeResource.TotalWidth*1.5),this.getHeight());
 		this.isBreeded = true;
 		this.breed = 0;
 	}
@@ -137,7 +136,7 @@ public abstract class Subject extends JPanel {
 		newGiraffe.setLocation(spawnPoint);
 		newGiraffe.move();
 		this.field.add(newGiraffe);
-		this.setSize(this.getWidth()*(2/3),this.getHeight());
+		this.setSize(GiraffeResource.TotalWidth,this.getHeight());
 		this.field.repaint();
 	}
 	
@@ -154,14 +153,18 @@ public abstract class Subject extends JPanel {
 				sub.eatReady = false;
 				sub.isEating=true;
 				sub.isMove=false;
+//				boolean isDie = feed.checkExecutor((Giraffe) sub);
 				// 식사 시간 
 				Thread.sleep(eatTime);
+				feed.dieTree((Giraffe) sub);
+//				if (isDie) {
+//				}
 				feed.repaint();
 				// 포만감 상승
-				sub.hungry += cal*ageRate;
+				sub.hungry += cal*GameField.ageRate;
 				// 포만감 최대 도달 
-				if (sub.hungry > 100*ageRate) {
-					sub.hungry = 100*ageRate;
+				if (sub.hungry > 100*GameField.ageRate) {
+					sub.hungry = 100*GameField.ageRate;
 				}
 				// 새끼를 낳은 상태면 새끼 성장
 				if (sub.isBreeded) {
@@ -169,7 +172,7 @@ public abstract class Subject extends JPanel {
 					System.out.println("새끼 나이 "+sub.independence);
 				}
 				// 새끼가 성체까지 성장하면 독립시키기
-				if (sub.independence >= sub.maxIndependence) {
+				if (sub.independence >= GameField.maxIndependence) {
 					sub.independent(sub.getLocation());
 				}
 				sub.isEating=false;
@@ -234,7 +237,10 @@ public abstract class Subject extends JPanel {
 			}
 		}
 		void goWithCheckLimit() {
-			Point p = grf.getLocation();		
+			Point p = grf.getLocation();	
+			if(grf.id == 1) {				
+//				System.out.println(p);
+			}
  			if (direction==ToUp) {
  				grf.setLocation(p.x, p.y-feet);
 				if(p.y < 0) {
@@ -309,46 +315,47 @@ public abstract class Subject extends JPanel {
 			return false;
 		}
 		Subject searchFeed() {
-			if (grf.isDetected) {
-				Point center = grf.getCenterPoint();
-				if (center.getX() <= 800-(searchHeight/2) && center.getX() >= 800+(searchHeight/2)) {
-					grf.isDetected = false;
-				}
-				if (center.getY() <= 600-(searchWidth/2) && center.getY() >= 600+(searchWidth/2)) {
-					grf.isDetected = false;
-				}
-			}
+//			if (grf.isDetected) {
+//				Point center = grf.getCenterPoint();
+//				if (center.getX() <= 800-(searchHeight/2) && center.getX() >= 800+(searchHeight/2)) {
+//					grf.isDetected = false;
+//				}
+//				if (center.getY() <= 600-(searchWidth/2) && center.getY() >= 600+(searchWidth/2)) {
+//					grf.isDetected = false;
+//				}
+//			}
 			boolean isFind = false;
 			for (Tree feed : feeds) {
-				if (grf.neck < feed.length-1) {
-					return null;
-				}
-				Point feedP = new Point(feed.getX()+(feed.getWidth()/2),feed.getY()+(feed.getHeight()/2));
-				if (direction == ToUp) {
-					isFind = searchHorizon(-1,feedP);
-				} else if (direction >= ToUpLeft && direction <= ToDownLeft) {
-					isFind = searchVertical(-1,feedP);
-				} else if (direction == ToDown) {
-					isFind = searchHorizon(1,feedP);
-				} else if (direction >= ToDownRight && direction <= ToUpRight) {
-					isFind = searchVertical(1,feedP);
-				}
-				if (isFind) {
-					grf.isDetected = true;
-					Object[] leafHeights = feed.leafs.keySet().toArray();
-					for (int i=leafHeights.length-1; i>-1;i--) {
-						int height = (int) leafHeights[i];
-						int leaf = feed.leafs.get(height);
-						System.out.println(height);
-						if (grf.neck >= height && leaf > 0) {
-							feed.leafs.put(height, leaf - 1);
-							feed.repaint();
-							break;
-						} else {
-							System.out.println("Too Long ,"+grf.neck +","+ height);
-						}
+				// 목 길이가 나무보다 길어야 함
+				if (grf.neck >= feed.length-1) {
+					Point feedP = new Point(feed.getX()+(feed.getWidth()/2),feed.getY()+(feed.getHeight()/2));
+					if (direction == ToUp) {
+						isFind = searchHorizon(-1,feedP);
+					} else if (direction >= ToUpLeft && direction <= ToDownLeft) {
+						isFind = searchVertical(-1,feedP);
+					} else if (direction == ToDown) {
+						isFind = searchHorizon(1,feedP);
+					} else if (direction >= ToDownRight && direction <= ToUpRight) {
+						isFind = searchVertical(1,feedP);
 					}
-					return feed;
+					if (isFind) {
+						grf.isDetected = true;
+						boolean cl = feed.checkLeaf(grf);
+						if (cl) {
+							return feed;
+						}
+//						for (int height=feed.length+1; height>feed.length-2;height--) {
+//							System.out.println("height : "+height);
+//							int leaf = feed.leafs.get(height);
+//							if (grf.neck >= height && leaf > 0) {
+//								feed.leafs.put(height, leaf - 1);
+//								feed.repaint();
+//								return feed;
+//							} else {
+//								System.out.println("Dont eat Height : "+height+", leaf : "+leaf);
+//							}
+//						}
+					}
 				}
 			}
 			grf.isDetected = false;
@@ -402,20 +409,23 @@ public abstract class Subject extends JPanel {
 		void toFeed(Subject feed) {
 			boolean feedSideLeft = true;
 			Point subCenter = grf.getCenterPoint();
+			// 나무에 골구로 분포하게 하기 위한 랜덤 값
+			int xr = (int)(Math.random()*20) - 10;
 			int xd;
 			if (feed.getX()+(feed.getWidth()/2) > subCenter.getX()) {
-				xd = (int) (feed.getX()-subCenter.getX()-(feed.getWidth()/2));
+				xd = (int) (feed.getX()-subCenter.getX());
 			} else {
 				feedSideLeft = false;
 				xd = (int) ((feed.getX()+feed.getWidth())-subCenter.getX())+(feed.getWidth()/2);
 			}
+			int yr = (int)(Math.random()*10) - 5;
 			int yd = (feed.getY()-grf.getY());
 			if (Math.abs(yd)>Math.abs(xd)) {
-				toFeedY(yd,feed);
-				toFeedX(xd,feed);
+				toFeedY(yd+yr,feed);
+				toFeedX(xd+xr,feed);
 			} else if (Math.abs(yd)<=Math.abs(xd)) {
-				toFeedX(xd,feed);
-				toFeedY(yd,feed);
+				toFeedX(xd+xr,feed);
+				toFeedY(yd+yr,feed);
 			} else {
 //				System.out.println("gr : "+feed.getY()+","+sub.getY()+","+Math.abs(feed.getY()-sub.getY()));
 //				int xdd = (xd > 0) ? 1 : -1;
@@ -471,10 +481,10 @@ public abstract class Subject extends JPanel {
 							// 포만감이 채워지면 출산 준비
 							if(!isBreeded) {
 								// 포만감이 일정 이상 올라가면 출산 준비
-								if(grf.hungry >= breedReadyValue*ageRate) {
+								if(grf.hungry >= GameField.breedReadyValue*GameField.ageRate) {
 									grf.breed++;
 									// 출산 준비가 채워지면 출산
-									if(grf.breed > breedValue*ageRate) {
+									if(grf.breed > GameField.breedValue*GameField.ageRate) {
 										grf.breed();
 									}
 								} else {

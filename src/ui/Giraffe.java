@@ -15,38 +15,70 @@ public class Giraffe extends Subject{
 	protected int dieFrame = 0;
 	private AlphaComposite alphaComposite;
 	Giraffe(GameField gf) {
-		super(gf,"GIRRAFE",gf.getFeeds(),50);
+		super(gf,gf.getFeeds(),50);
 
 		this.neck = neckMutant(10);
 //		this.neck = DefaultNeck;
 		this.setSize(new Dimension(resource.TotalWidth,
 				(resource.HeadHeight+resource.BodyHeight+this.getNeckHeight())
 				));
+		
 		this.resource = gf.getResource();
 		this.moveMotionThread = new Thread(new MoveMotionThread(this));
 		this.eatingMotionThread = new Thread(new EatingMotionThread(this));
 		this.dieMotionThread = new Thread(new DieMotionThread(this));
 		explore();
 		gf.giraffes.add(this);
-		gf.updateAmount();
 	}
 	Giraffe(GameField gf,int gene) {
-		super(gf,"GIRRAFE",gf.getFeeds(),50);
+		this(gf);
 		this.neck = neckMutant(gene);
-		this.setSize(new Dimension(resource.TotalWidth,
-				(resource.HeadHeight+resource.BodyHeight+this.getNeckHeight())
-				));
-		this.resource = gf.getResource();
-		this.moveMotionThread = new Thread(new MoveMotionThread(this));
-		this.eatingMotionThread = new Thread(new EatingMotionThread(this));
-		this.dieMotionThread = new Thread(new DieMotionThread(this));
-		explore();
-		gf.giraffes.add(this);
+		gf.maxGiraffeID++;
+		this.id = gf.maxGiraffeID;
 		gf.updateAmount();
 	}
+	Giraffe(GameField gf,GiraffeVO vo) {
+		this(gf);
+		this.id = vo.getId();
+		this.neck = vo.getNeck();
+		this.birthDate = vo.getBirthDate();
+		this.lastDirection = vo.getLastDirection();
+		this.lastHeadDirection = vo.getLastHeadDirection();
+		this.hungry = vo.getHungry();
+		this.breed = vo.getBreed();
+		this.independence = vo.getIndependence();
+		this.setLocation(vo.getX(),vo.getY());
+		this.isMove = vo.isMove();
+//		this.isEating = vo.isEating();
+		this.isEating = false;
+		this.isBreeded = vo.isBreeded();
+		this.isReflected = vo.isReflected();
+		this.isDetected = vo.isDetected();
+		this.died = vo.isDied();
+	}
+	public GiraffeVO parseVO() {
+		GiraffeVO vo = new GiraffeVO();
+		vo.setId(this.id);
+		vo.setNeck(this.neck);
+		vo.setBirthDate(this.birthDate);
+		vo.setLastDirection(this.lastDirection);
+		vo.setLastHeadDirection(this.lastHeadDirection);
+		vo.setHungry(this.hungry);
+		vo.setBreed(this.breed);
+		vo.setIndependence(this.independence);
+		vo.setX(this.getX());
+		vo.setY(this.getY());
+		vo.setMove(this.isMove);
+		vo.setEating(this.isEating);
+		vo.setBreeded(this.isBreeded);
+		vo.setReflected(this.isReflected);
+		vo.setDetected(this.isDetected);
+		vo.setDied(this.died);
+		return vo;
+	}
 	int neckMutant(int neck) {
-		int p = (int) (Math.random() * 10) + 1;
-		if (p>10-GameMain.mutantProb) {
+		int p = (int) (Math.random() * 100) + 1;
+		if (p>100-GameMain.mutantProb) {
 			int[] changes = {-1,-2,1,2};
 //			int[] changes = {-3,-6,3,6};
 			int pick = (int) (Math.random() * 4);

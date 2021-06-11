@@ -5,33 +5,53 @@ import javax.swing.*;
 import libs.utils;
 import java.util.*;
 
-class Tree extends Subject {
+public class Tree extends Subject {
 	TreeResource rsrc = null;
+	static final int LEAF_HEIGHTS = 3;
 	protected HashMap<Integer,Integer> leafs = new HashMap<Integer,Integer>();
 	protected int length;
 	GameField gameField;
 	private int dieFrame = 0;
+	private Giraffe executor;
 
 	private AlphaComposite alphaComposite;
 	
 	public Tree(GameField gf,TreeResource rsrc) {
-		super(gf,"Tree",null,0);
-		length = ((int)(Math.random()*5)) + GameMain.treeAverage - 2;
-		leafs.put(length-1, 10);
-		leafs.put(length, 12);
-		leafs.put(length+1, 10);
+		super(gf,null,0);
 		this.setSize(new Dimension(rsrc.TotalWidth,length*rsrc.TreeLengthUnit));
 		this.rsrc = rsrc;
-		this.gameField = gf;
 	}
+	
 	public Tree(GameField gf,TreeResource rsrc,int length) {
-		super(gf,"Tree",null,0);
-		leafs.put(length-1, 10);
-		leafs.put(length, 12);
-		leafs.put(length+1, 10);
+		this(gf,rsrc);
+		leafs.put(length-1, 1);
+		leafs.put(length, 1);
+		leafs.put(length+1, 0);
+		this.length = length;
 		this.setSize(new Dimension(rsrc.TotalWidth,length*rsrc.TreeLengthUnit));
-		this.rsrc = rsrc;
 	}
+	
+	public Tree(GameField gf,TreeResource rsrc,TreeVO vo) {
+		this(gf, rsrc);
+		this.length = vo.getLength();
+		this.setLocation(vo.getX(),vo.getY());
+		this.leafs.put(this.length-1,vo.getLeaf0());
+		this.leafs.put(this.length,vo.getLeaf1());
+		this.leafs.put(this.length+1,vo.getLeaf2());
+		this.setSize(new Dimension(rsrc.TotalWidth,length*rsrc.TreeLengthUnit));
+	}
+	
+	public TreeVO parseVO() {
+		TreeVO vo = new TreeVO();
+		vo.setLength(this.length);
+		vo.setLeaf0(this.leafs.get(this.length-1));
+		vo.setLeaf1(this.leafs.get(this.length));
+		vo.setLeaf2(this.leafs.get(this.length+1));
+		vo.setX(this.getX());
+		vo.setY(this.getY());
+		return vo;
+	}
+	
 	@Override
 	void death() {
 		// TODO Auto-generated method stub
@@ -43,30 +63,64 @@ class Tree extends Subject {
 		
 	}
 	
-	void checkDie() {
-		boolean die = false;
-		if(leafs.get(this.length-1) <= 0 && leafs.get(this.length) <= 0 && leafs.get(this.length+1) <= 0) {
-			die = true;
+	boolean checkLeaf(Giraffe grf) {
+		for (int height=this.length+1; height>this.length-2;height--) {
+			int leaf = this.leafs.get(height);
+			if (grf.neck >= height && leaf > 0) {
+				this.leafs.put(height, leaf - 1);
+				this.repaint();
+				checkDie(grf);
+				return true;
+			}
 		}
-		if (die) {
-			this.died = true;
-			gameField.remove(this);
-			gameField.trees.remove(this);
-			gameField.repaint();
+		return false;
+	}
+	
+	void checkDie(Giraffe grf) {
+		int die = 0;
+		Iterator keys = leafs.keySet().iterator();
+		while(keys.hasNext()) {
+			if(leafs.get(keys.next()) <= 0) {
+				die++;
+			}
 		}
+		if (die == 3) {
+			this.field.trees.remove(this);
+			this.executor = grf;
+//			return true;
+		}
+//		return false;
+	}
+	
+	boolean checkExecutor(Giraffe grf) {
+		if (this.executor == grf) {
+			return true;
+		}
+		return false;
+	}
+	
+	void dieTree(Giraffe grf) throws InterruptedException {
+		if (this.executor != grf) {
+			return;
+		}
+		this.died = true;
+		Thread.sleep(Subject.eatTime);
+		DieMotionThread dmt = new DieMotionThread(this);
+		Thread motionThread = new Thread(dmt);
+		motionThread.start();
 	}
 	
 	class DieMotionThread implements Runnable {
-		private Giraffe g;
-		DieMotionThread(Giraffe g) {
-			this.g = g;
+		private Tree t;
+		DieMotionThread(Tree t) {
+			this.t = t;
 		}
 		@Override
 		public synchronized void run() {
 			// 이동이 멈추면 중단
-			while(g.dieFrame < 10){
-				g.dieFrame++;
-				g.repaint();
+			while(t.dieFrame < 10){
+				t.dieFrame++;
+				t.repaint();
 				try {
 					Thread.sleep(100);
 				} catch (InterruptedException e) {
@@ -74,9 +128,9 @@ class Tree extends Subject {
 				}
 			}
 
-			g.field.remove(g);
-			g.field.giraffes.remove(g);
-			g.field.repaint();
+			t.field.remove(t);
+//			t.field.trees.remove(t);
+			t.field.repaint();
 		}
 	}
 	
@@ -84,6 +138,7 @@ class Tree extends Subject {
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		if (this.size == null) {
+			System.out.println("tree size null?");
 			return;
 		}
 		if (this.died) {

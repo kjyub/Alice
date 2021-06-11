@@ -8,189 +8,72 @@ import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.*;
 
+import db.AliceDAO;
+
 public class GameMain extends JFrame{
+	
+	AliceDAO dao = null;
+	
+	GameField gameField = null;
+	
+	public static int user_pk;
 
 	public static JLabel grfAmount = null;
 	public static JLabel grfNeckAverage = null;
-	public static int treeAverage = 11; // 나무의 평균 높이 (-+ 2) - 조정가능 
-	public static int mutantProb = 3; // 돌연변이 확률 (x10) 0~10 - 조정가능  
+	
+	// DB 로드시 업데이트
+	public static JLabel timeLabel = null;
+	public static JLabel lbMutantProbValue = null;
+	public static JLabel lbAgeRateValue = null;
+	public static JLabel lbBreedValueValue = null;
+	public static JLabel lbBreedReadyValueValue = null;
+	public static JLabel lbMaxIndependenceValue = null;
+	public static JLabel lbSearchScaleValue = null;
+	
+	public static JTextField tfMutantProb = null;
+	public static JTextField tfAgeRate = null;
+	public static JTextField tfBreedValue = null;
+	public static JTextField tfBreedReadyValue = null;
+	public static JTextField tfMaxIndependence = null;
+	public static JTextField tfSearchScale = null;
+	
+	// 상태 값들 - db 저장
+	public static int mutantProb = 30; // 돌연변이 확률  0~100% - 조정가능  
 	public static float sizeScale = (float) 0.5; // 기린 이미지 크기 - 조정가능  
 	public static boolean subjectInfo = true;
+	
 	public static DefaultTableModel giraffesTableModel;
 	
 	public static boolean treePlacing = false;
 	public static int treePlaceHeight = 0;
-	GameField gameField = null;
-	
-	class ControlPanelTemp extends JPanel {
-		String[] tdlr = {"TOP","DOWN","LEFT","RIGHT","UPLEFT","UPRIGHT","DOWNLEFT","DOWNRIGHT"};
-		int distance = 10;
-		ControlPanelTemp(GameField gf) {
-			this.setBackground(new Color(0x4E455D));
-			JLabel numberLabel = new JLabel("summon");
-			numberLabel.setForeground(Color.white);
-			
-			JLabel grfAmountLabel = new JLabel("개체 수 : ");
-			grfAmountLabel.setForeground(Color.white);
-			this.add(grfAmountLabel);
-			grfAmount = new JLabel("0");
-			grfAmount.setForeground(Color.white);
-			this.add(grfAmount);
-			
-			JTextField grfTf = new JTextField(5);
-			grfTf.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					// TODO Auto-generated method stub
-					try {
-						JTextField tf = (JTextField)e.getSource();
-						int num = Integer.parseInt(tf.getText());
-						gf.summon(num);
-					} catch (NumberFormatException e1) {
-						System.out.println("Wrong Input");
-					}
-					gf.repaint();
-				}
-			});
-			this.add(numberLabel);
-			this.add(grfTf);
-			JLabel distanceLabel = new JLabel("DISTANCE");
-			distanceLabel.setForeground(Color.white);
-			this.add(distanceLabel);
-			JTextField tf = new JTextField(5);
-			tf.setText(Integer.toString(distance));
-			tf.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					// TODO Auto-generated method stub
-					try {
-						JTextField tf = (JTextField)e.getSource();
-						distance = Integer.parseInt(tf.getText());
-					} catch (NumberFormatException e1) {
-						System.out.println("Wrong Input");
-					}
-				}
-			});
-			this.add(tf);
-			
-			JLabel speedLabel = new JLabel("SPEED");
-			speedLabel.setForeground(Color.white);
-			this.add(speedLabel);
-			JTextField speedTf = new JTextField(5);
-			speedTf.setText("50");
-			speedTf.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					// TODO Auto-generated method stub
-					try {
-						JTextField tf = (JTextField)e.getSource();
-						int speed = Integer.parseInt(tf.getText());
-						for(int i=0;i<gf.giraffes.size();i++) {
-							Giraffe grf = gf.giraffes.get(i);
-							grf.setSpeed(speed);
-						}
-					} catch (NumberFormatException e1) {
-						System.out.println("Wrong Input");
-					}
-				}
-			});
-			this.add(speedTf);
-			
-			JLabel rateLabel = new JLabel("Age Rate");
-			rateLabel.setForeground(Color.white);
-			this.add(rateLabel);
-			JTextField rateTf = new JTextField(5);
-			rateTf.setText("50");
-			rateTf.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					// TODO Auto-generated method stub
-					try {
-						JTextField tf = (JTextField)e.getSource();
-						int rate = Integer.parseInt(tf.getText());
-						for(int i=0;i<gf.giraffes.size();i++) {
-							Giraffe grf = gf.giraffes.get(i);
-							grf.setAgeRate(rate);
-						}
-					} catch (NumberFormatException e1) {
-						System.out.println("Wrong Input");
-					}
-				}
-			});
-			this.add(rateTf);
 
-			JLabel calLabel = new JLabel("calorie");
-			calLabel.setForeground(Color.white);
-			this.add(calLabel);
-			JTextField calTf = new JTextField(5);
-			calTf.setText("50");
-			calTf.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					// TODO Auto-generated method stub
-					try {
-						JTextField tf = (JTextField)e.getSource();
-						int cal = Integer.parseInt(tf.getText());
-						for(int i=0;i<gf.giraffes.size();i++) {
-							Giraffe grf = gf.giraffes.get(i);
-							grf.setCal(cal);
-						}
-					} catch (NumberFormatException e1) {
-						System.out.println("Wrong Input");
-					}
-				}
-			});
-			this.add(calTf);
-			
-			JButton eating = new JButton("EAT");
-			eating.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					for(int i=0;i<gf.giraffes.size();i++) {
-						Giraffe grf = gf.giraffes.get(i);
-//						grf.eat();
-					}
-				}
-			});
-			this.add(eating);
-			JButton startBtn = new JButton("START");
-			startBtn.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					for(int i=0;i<gf.giraffes.size();i++) {
-						Giraffe grf = gf.giraffes.get(i);
-						grf.isMove=true;
-					}
-				}
-			});
-			this.add(startBtn);
-			JButton stopBtn = new JButton("REMOVE");
-			stopBtn.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					for(int i=0;i<gf.giraffes.size();i++) {
-						Giraffe grf = gf.giraffes.get(i);
-						System.out.println(grf);
-						grf.die();
-						gf.giraffes.remove(i);
-					}
-					gf.trees.removeAllElements();
-					gf.removeAll();
-					gf.repaint();
-				}
-			});
-			this.add(stopBtn);
-		}
+	public static void updatePanel() {
+		timeLabel.setText(GameField.getTimeStampToString());
+		lbMutantProbValue.setText(Integer.toString(mutantProb));
+		tfMutantProb.setText(Integer.toString(mutantProb));
+		lbAgeRateValue.setText(Integer.toString(GameField.ageRate));
+		tfAgeRate.setText(Integer.toString(GameField.ageRate));
+		lbBreedValueValue.setText(Integer.toString(GameField.breedValue));
+		tfBreedValue.setText(Integer.toString(GameField.breedValue));
+		lbBreedReadyValueValue.setText(Integer.toString(GameField.breedReadyValue));
+		tfBreedReadyValue.setText(Integer.toString(GameField.breedReadyValue));
+		lbMaxIndependenceValue.setText(Integer.toString(GameField.maxIndependence));
+		tfMaxIndependence.setText(Integer.toString(GameField.maxIndependence));
+		lbSearchScaleValue.setText(Integer.toString(GameField.searchScale));
+		tfSearchScale.setText(Integer.toString(GameField.searchScale));
+		System.out.println("update panel");
 	}
 	
-	class ControlPanel extends JPanel {
+	public class ControlPanel extends JPanel {
 		int controlPanelWidth;
-		JLabel lbSummonTreeCount;
+		public JLabel lbSummonTreeCount;
 		JSlider treeSlider;
 		ControlPanel(GameField gf) {
 			this.setBackground(new Color(0x4E455D));
 			controlPanelWidth = this.getWidth();
 			this.setLayout(getLayout());
+			
+			timeLabel = new GameComponents.ControlLabel(GameField.getTimeStampToString());
 			
 			JLabel lbAmount = new GameComponents.ControlLabel("개체 수");
 			grfAmount = new GameComponents.ControlLabel("");
@@ -217,10 +100,10 @@ public class GameMain extends JFrame{
 			lbSummonTreeCount = new GameComponents.ControlLabel("10");
 			treeSlider = new JSlider(5,20,10);
 			treeSlider.addChangeListener(new TreeSummonSliderChanged());
-			JButton btnTreeSummon = new JButton("소환");
+			JButton btnTreeSummon = new GameComponents.RoundedButton("소환");
 			btnTreeSummon.addActionListener(new TreeSummonAction());
 			
-			JButton btnSummonGiraffe = new JButton("기린 소환 (5마리)");
+			JButton btnSummonGiraffe = new GameComponents.RoundedButton("기린 소환 (5마리)");
 			btnSummonGiraffe.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
@@ -228,18 +111,37 @@ public class GameMain extends JFrame{
 				}
 			});
 			
+			JLabel lbMutantProb = new GameComponents.ControlLabel("돌연변이 확률 (0~100) ");
+			lbMutantProbValue = new GameComponents.ControlLabel(Integer.toString(GameMain.mutantProb));
+			tfMutantProb = new JTextField(3);
+			tfMutantProb.setText(lbMutantProbValue.getText());
+			JButton btnMutantProb = new GameComponents.RoundedButton("적용");
+			btnMutantProb.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					String value = tfMutantProb.getText();
+					try {
+						int intValue = Integer.parseInt(value);
+						GameMain.mutantProb = intValue;
+						lbMutantProbValue.setText(value);
+					} catch(NumberFormatException err) {
+						lbMutantProbValue.setText("ERR");
+					}
+				}
+			});
+			
 			JLabel lbAgeRate = new GameComponents.ControlLabel("AgeRate ");
-			JLabel lbAgeRateValue = new GameComponents.ControlLabel(Integer.toString(Subject.ageRate));
-			JTextField tfAgeRate = new JTextField(3);
+			lbAgeRateValue = new GameComponents.ControlLabel(Integer.toString(GameField.ageRate));
+			tfAgeRate = new JTextField(3);
 			tfAgeRate.setText(lbAgeRateValue.getText());
-			JButton btnAgeRate = new JButton("적용");
+			JButton btnAgeRate = new GameComponents.RoundedButton("적용");
 			btnAgeRate.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					String value = tfAgeRate.getText();
 					try {
 						int intValue = Integer.parseInt(value);
-						Subject.ageRate = intValue;
+						GameField.ageRate = intValue;
 						lbAgeRateValue.setText(value);
 					} catch(NumberFormatException err) {
 						lbAgeRateValue.setText("ERR");
@@ -247,18 +149,18 @@ public class GameMain extends JFrame{
 				}
 			});
 			
-			JLabel lbBreedValue = new GameComponents.ControlLabel("BreedValue (1~100) ");
-			JLabel lbBreedValueValue = new GameComponents.ControlLabel(Integer.toString(Subject.breedValue));
-			JTextField tfBreedValue = new JTextField(3);
+			JLabel lbBreedValue = new GameComponents.ControlLabel("BreedValue (0~100) ");
+			lbBreedValueValue = new GameComponents.ControlLabel(Integer.toString(GameField.breedValue));
+			tfBreedValue = new JTextField(3);
 			tfBreedValue.setText(lbBreedValueValue.getText());
-			JButton btnBreedValue = new JButton("적용");
+			JButton btnBreedValue = new GameComponents.RoundedButton("적용");
 			btnBreedValue.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					String value = tfBreedValue.getText();
 					try {
 						int intValue = Integer.parseInt(value);
-						Subject.breedValue = intValue;
+						GameField.breedValue = intValue;
 						lbBreedValueValue.setText(value);
 					} catch(NumberFormatException err) {
 						lbBreedValueValue.setText("ERR");
@@ -267,17 +169,17 @@ public class GameMain extends JFrame{
 			});
 			
 			JLabel lbBreedReadyValue = new GameComponents.ControlLabel("BreedReadyValue ");
-			JLabel lbBreedReadyValueValue = new GameComponents.ControlLabel(Integer.toString(Subject.breedReadyValue));
-			JTextField tfBreedReadyValue = new JTextField(3);
+			lbBreedReadyValueValue = new GameComponents.ControlLabel(Integer.toString(GameField.breedReadyValue));
+			tfBreedReadyValue = new JTextField(3);
 			tfBreedReadyValue.setText(lbBreedReadyValueValue.getText());
-			JButton btnBreedReadyValue = new JButton("적용");
+			JButton btnBreedReadyValue = new GameComponents.RoundedButton("적용");
 			btnBreedReadyValue.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					String value = tfBreedReadyValue.getText();
 					try {
 						int intValue = Integer.parseInt(value);
-						Subject.breedReadyValue = intValue;
+						GameField.breedReadyValue = intValue;
 						lbBreedReadyValueValue.setText(value);
 					} catch(NumberFormatException err) {
 						lbBreedReadyValueValue.setText("ERR");
@@ -286,17 +188,17 @@ public class GameMain extends JFrame{
 			});
 
 			JLabel lbMaxIndependence = new GameComponents.ControlLabel("maxIndependence ");
-			JLabel lbMaxIndependenceValue= new GameComponents.ControlLabel(Integer.toString(Subject.maxIndependence));
-			JTextField tfMaxIndependence = new JTextField(3);
+			lbMaxIndependenceValue= new GameComponents.ControlLabel(Integer.toString(GameField.maxIndependence));
+			tfMaxIndependence = new JTextField(3);
 			tfMaxIndependence.setText(lbMaxIndependenceValue.getText());
-			JButton btnMaxIndependence = new JButton("적용");
+			JButton btnMaxIndependence = new GameComponents.RoundedButton("적용");
 			btnMaxIndependence.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					String value = tfMaxIndependence.getText();
 					try {
 						int intValue = Integer.parseInt(value);
-						Subject.maxIndependence = intValue;
+						GameField.maxIndependence = intValue;
 						lbMaxIndependenceValue.setText(value);
 					} catch(NumberFormatException err) {
 						lbMaxIndependenceValue.setText("ERR");
@@ -305,17 +207,17 @@ public class GameMain extends JFrame{
 			});
 			
 			JLabel lbSearchScale = new GameComponents.ControlLabel("SearchScale ");
-			JLabel lbSearchScaleValue= new GameComponents.ControlLabel(Integer.toString(Subject.searchScale));
-			JTextField tfSearchScale = new JTextField(3);
+			lbSearchScaleValue= new GameComponents.ControlLabel(Integer.toString(GameField.searchScale));
+			tfSearchScale = new JTextField(3);
 			tfSearchScale.setText(lbSearchScaleValue.getText());
-			JButton btnSearchScale = new JButton("적용");
+			JButton btnSearchScale = new GameComponents.RoundedButton("적용");
 			btnSearchScale.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					String value = tfSearchScale.getText();
 					try {
 						int intValue = Integer.parseInt(value);
-						Subject.searchScale = intValue;
+						GameField.searchScale = intValue;
 						lbSearchScaleValue.setText(value);
 					} catch(NumberFormatException err) {
 						lbSearchScaleValue.setText("ERR");
@@ -323,7 +225,8 @@ public class GameMain extends JFrame{
 				}
 			});
 			
-			JButton resetButton = new JButton("초기화");
+			JButton resetButton = new GameComponents.RoundedButton("초기화");
+			resetButton.setBackground(new Color(0xcf433c));
 			resetButton.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
@@ -334,7 +237,8 @@ public class GameMain extends JFrame{
 					}
 				}
 			});
-			JButton startButton = new JButton("시작");
+			JButton startButton = new GameComponents.RoundedButton("시작");
+			startButton.setBackground(new Color(0x52de91));
 			startButton.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
@@ -346,15 +250,22 @@ public class GameMain extends JFrame{
 				}
 			});
 			
-			JPanel control1 = new JPanel();
+			GridBagPanel control1 = new GridBagPanel();
 			control1.setBackground(null);
-			control1.setLayout(new GridLayout(3,2,2,2));
-			control1.add(lbAmount);
-			control1.add(grfAmount);
-			control1.add(lbNeckAverage);
-			control1.add(grfNeckAverage);
-			control1.add(lbShowInfo);
-			control1.add(grfShowInfo);
+			control1.setSize(controlPanelWidth,control1.getHeight());
+//			control1.insert(timeLabel, 0, 0, 5, 1);
+			control1.insert(lbAmount,0,1,3,1);
+			control1.insert(grfAmount,3,1,2,1);
+			control1.insert(lbNeckAverage,0,2,3,1);
+			control1.insert(grfNeckAverage,3,2,2,1);
+			control1.insert(lbShowInfo,0,3,3,1);
+			control1.insert(grfShowInfo,3,3,2,1);
+			JTextField padding = new JTextField(23);
+			padding.setEnabled(false);
+			padding.setBackground(null);
+			padding.setForeground(null);
+			padding.setBorder(null);
+			control1.insert(padding, 0, 3, 5, 1,new Insets(0,3,0,3));
 			
 			GridBagPanel summonPanel = new GridBagPanel();
 			summonPanel.setBackground(null);
@@ -365,52 +276,88 @@ public class GameMain extends JFrame{
 			summonPanel.insert(treeSlider,0,1,5,1);
 			
 			int y1 = 2;
+			summonPanel.insert(lbMutantProb,0,0+y1,2,1);
+			summonPanel.insert(lbMutantProbValue,3,0+y1,1,1);
+			summonPanel.insert(tfMutantProb,0,1+y1,3,1);
+			summonPanel.insert(btnMutantProb,4,0+y1,1,2,new Insets(5,0,5,0));
+			y1 += 2;
+			
 			summonPanel.insert(lbAgeRate,0,0+y1,2,1);
 			summonPanel.insert(lbAgeRateValue,3,0+y1,1,1);
 			summonPanel.insert(tfAgeRate,0,1+y1,3,1);
-			summonPanel.insert(btnAgeRate,4,0+y1,1,2);
+			summonPanel.insert(btnAgeRate,4,0+y1,1,2,new Insets(5,0,5,0));
 			y1 += 2;
 			
 			summonPanel.insert(lbBreedValue,0,0+y1,2,1);
 			summonPanel.insert(lbBreedValueValue,3,0+y1,1,1);
 			summonPanel.insert(tfBreedValue,0,1+y1,3,1);
-			summonPanel.insert(btnBreedValue,4,0+y1,1,2);
+			summonPanel.insert(btnBreedValue,4,0+y1,1,2,new Insets(5,0,5,0));
 			y1 += 2;
 			
 			summonPanel.insert(lbBreedReadyValue,0,0+y1,2,1);
 			summonPanel.insert(lbBreedReadyValueValue,3,0+y1,1,1);
 			summonPanel.insert(tfBreedReadyValue,0,1+y1,3,1);
-			summonPanel.insert(btnBreedReadyValue,4,0+y1,1,2);
+			summonPanel.insert(btnBreedReadyValue,4,0+y1,1,2,new Insets(5,0,5,0));
 			y1 += 2;
 			
 			summonPanel.insert(lbMaxIndependence,0,0+y1,2,1);
 			summonPanel.insert(lbMaxIndependenceValue,3,0+y1,1,1);
 			summonPanel.insert(tfMaxIndependence,0,1+y1,3,1);
-			summonPanel.insert(btnMaxIndependence,4,0+y1,1,2);
+			summonPanel.insert(btnMaxIndependence,4,0+y1,1,2,new Insets(5,0,5,0));
 			y1 += 2;
 
 			summonPanel.insert(lbSearchScale,0,0+y1,2,1);
 			summonPanel.insert(lbSearchScaleValue,3,0+y1,1,1);
 			summonPanel.insert(tfSearchScale,0,1+y1,3,1);
-			summonPanel.insert(btnSearchScale,4,0+y1,1,2);
+			summonPanel.insert(btnSearchScale,4,0+y1,1,2,new Insets(5,0,5,0));
 			y1 += 2;
 			
 
-			summonPanel.insert(resetButton,0,100,2,1);
-			summonPanel.insert(startButton,3,100,2,1);
+			summonPanel.insert(resetButton,0,100,2,1,new Insets(0,4,0,4));
+			summonPanel.insert(startButton,3,100,2,1,new Insets(0,4,0,4));
 			
 			GridBagPanel giraffeControlPanel = new GridBagPanel();
 			giraffeControlPanel.setBackground(null);
 			giraffeControlPanel.setSize(controlPanelWidth,summonPanel.getHeight());
 			
+//			this.setLayout(new FlowLayout(FlowLayout.LEFT,5,10));
+			this.setSize(300, 1050);
+			this.add(timeLabel);
 			this.add(control1);
 			this.add(summonPanel);
+			JButton loginBtn = new JButton("login");
+			loginBtn.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					String id = JOptionPane.showInputDialog("ID 입력");
+					String pw = JOptionPane.showInputDialog("PW 입력");
+					dao.login(id,pw);
+					gameField.startTime();
+				}
+			});
+			JButton logoutBtn = new JButton("logout");
+			logoutBtn.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					JOptionPane saveMsg = new JOptionPane();
+//					saveMsg.showMessageDialog(null, "데이터 저장 중 ....");
+					dao.logout();
+					System.exit(0);
+				}
+			});
+			this.add(loginBtn);
+			this.add(logoutBtn);
 //			this.add(giraffeControlPanel);
 //			this.insert(lbAmount, 0, 0, 1, 1);
 //			this.insert(grfAmount, 1, 0, 3, 1);
 //			this.insert(lbNeckAverage, 0, 1, 1, 1);
 //			this.insert(grfNeckAverage, 1, 1, 3, 1);
 		}
+		
+		public void updateControlPanel() {
+			System.out.println("update control panel");
+		}
+		
 		class TreeSummonAction implements ActionListener {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -438,12 +385,15 @@ public class GameMain extends JFrame{
 			giraffesTableModel = new DefaultTableModel(null,giraffesTableHeaders);
 			JTable giraffesTable = new JTable(giraffesTableModel);
 			
-			this.setLayout(new GridLayout(1,2));
+			this.setLayout(new GridLayout(1,3));
 			JPanel status1 = new JPanel();
 			status1.setBackground(null);
+			JPanel status2 = new JPanel();
+			status2.setBackground(null);
 			this.add(new JScrollPane(giraffesTable));
 			
 			this.add(status1);
+			this.add(status2);
 		}
 		@Override
 		public void paintComponent(Graphics g) {
@@ -453,6 +403,7 @@ public class GameMain extends JFrame{
 	}
 	
 	GameMain() {
+		
 		this.setTitle("ALICE");
 		this.setSize(1650,1050);
 		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -460,20 +411,33 @@ public class GameMain extends JFrame{
 //		this.setBackground(Color.BLUE);
 //		this.setResizable(false);
 		this.setLayout(null);
+		
+		gameField = new GameField(this.getSize().width,this.getSize().height);
+		
 		JPanel cp = new ControlPanel(gameField);
 		cp.setLocation(0, 0);
 		cp.setSize(300, 1050);
 		JPanel sp = new StatusPanel();
 		sp.setLocation(300,GameField.FieldSize.height);
 		sp.setSize(1650-300,300);
-		gameField = new GameField(this.getSize().width,this.getSize().height);
 //		gameField.summon(5);
 //		gameField.treeSummon(5);
 		gameField.setLocation(300, 0);
 		this.add(gameField);
 		this.add(cp);
 		this.add(sp);
+		
+		this.setLocationRelativeTo(null);
 		this.setVisible(true);
+		this.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				dao.logout();
+				System.exit(0);
+			}
+		});
+		
+		dao = new AliceDAO(this,gameField);
 	}
  	
 	public static void main(String[] args) {
