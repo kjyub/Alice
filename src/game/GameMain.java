@@ -14,6 +14,8 @@ import java.awt.*;
 import java.awt.event.*;
 
 import db.AliceDAO;
+import libs.ActionTypes;
+import ui.LoginFrame;
 
 public class GameMain extends JFrame{
 	
@@ -48,11 +50,12 @@ public class GameMain extends JFrame{
 	public static boolean subjectInfo = true;
 	
 	public static DefaultTableModel giraffesTableModel;
+	public static DefaultTableModel giraffesHeightTableModel;
 	
 	public static boolean treePlacing = false;
 	public static int treePlaceHeight = 0;
 
-	public static void updatePanel() {
+	public void updatePanel() {
 		timeLabel.setText(GameField.getTimeStampToString());
 		lbMutantProbValue.setText(Integer.toString(mutantProb));
 		tfMutantProb.setText(Integer.toString(mutantProb));
@@ -66,6 +69,15 @@ public class GameMain extends JFrame{
 		tfMaxIndependence.setText(Integer.toString(GameField.maxIndependence));
 		lbSearchScaleValue.setText(Integer.toString(GameField.searchScale));
 		tfSearchScale.setText(Integer.toString(GameField.searchScale));
+		
+		for (int i=0; i<GameField.giraffeAverages.size(); i++) {
+			Vector<String> tableRow = new Vector<String>();
+			tableRow.add(GameField.getTimeStampToString((i+1)*GameField.AverageTimeUnit));
+			tableRow.add(GameField.giraffeAverages.get(i).toString());
+			GameMain.giraffesHeightTableModel.addRow(tableRow);
+		}
+		gameField.timeStopFlag = !gameField.timeStopFlag; 
+		gameField.startTime();
 		System.out.println("update panel");
 	}
 	
@@ -79,14 +91,20 @@ public class GameMain extends JFrame{
 			this.setLayout(getLayout());
 			
 			timeLabel = new ControlLabel(GameField.getTimeStampToString());
+			timeLabel.setFont(new Font("굴림체",Font.PLAIN,20));
 			
 			JLabel lbAmount = new ControlLabel("개체 수");
+			lbAmount.setFont(new Font("굴림체",Font.PLAIN,18));
 			grfAmount = new ControlLabel("");
+			grfAmount.setFont(new Font("굴림체",Font.PLAIN,18));
 			grfAmount.setHorizontalAlignment(JLabel.RIGHT);
 			JLabel lbNeckAverage = new ControlLabel("목 길이 평균");
+			lbNeckAverage.setFont(new Font("굴림체",Font.PLAIN,18));
 			grfNeckAverage = new ControlLabel("");
+			grfNeckAverage.setFont(new Font("굴림체",Font.PLAIN,18));
 			grfNeckAverage.setHorizontalAlignment(JLabel.RIGHT);
 			JLabel lbShowInfo = new ControlLabel("기린 정보 보기");
+			lbShowInfo.setFont(new Font("굴림체",Font.PLAIN,18));
 			JCheckBox grfShowInfo = new JCheckBox();
 			grfShowInfo.setSelected(subjectInfo);
 			grfShowInfo.setHorizontalAlignment(JLabel.RIGHT);
@@ -102,7 +120,9 @@ public class GameMain extends JFrame{
 			});
 			
 			JLabel lbSummonTree = new ControlLabel("소환할 나무 길이");
+			lbSummonTree.setFont(new Font("굴림체",Font.PLAIN,18));
 			lbSummonTreeCount = new ControlLabel("10");
+			lbSummonTreeCount.setFont(new Font("굴림체",Font.PLAIN,18));
 			treeSlider = new JSlider(5,20,10);
 			treeSlider.addChangeListener(new TreeSummonSliderChanged());
 			JButton btnTreeSummon = new RoundedButton("소환");
@@ -116,12 +136,12 @@ public class GameMain extends JFrame{
 				}
 			});
 			
-			JLabel lbMutantProb = new ControlLabel("돌연변이 확률 (0~100) ");
+			JLabel lbMutantProb = new ControlLabel("돌연변이 확률 % ");
 			lbMutantProbValue = new ControlLabel(Integer.toString(GameMain.mutantProb));
 			tfMutantProb = new JTextField(3);
 			tfMutantProb.setText(lbMutantProbValue.getText());
 			JButton btnMutantProb = new RoundedButton("적용");
-			btnMutantProb.addActionListener(new ActionListener() {
+			ActionListener mutantProbAction = new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					String value = tfMutantProb.getText();
@@ -137,14 +157,16 @@ public class GameMain extends JFrame{
 						lbMutantProbValue.setText("ERR");
 					}
 				}
-			});
+			};
+			btnMutantProb.addActionListener(mutantProbAction);
+			tfMutantProb.addActionListener(mutantProbAction);
 			
 			JLabel lbAgeRate = new ControlLabel("포만감 배율 ");
 			lbAgeRateValue = new ControlLabel(Integer.toString(GameField.ageRate));
 			tfAgeRate = new JTextField(3);
 			tfAgeRate.setText(lbAgeRateValue.getText());
 			JButton btnAgeRate = new RoundedButton("적용");
-			btnAgeRate.addActionListener(new ActionListener() {
+			ActionListener ageRateAction = new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					String value = tfAgeRate.getText();
@@ -160,15 +182,18 @@ public class GameMain extends JFrame{
 						lbAgeRateValue.setText("ERR");
 					}
 				}
-			});
+			};
+			btnAgeRate.addActionListener(ageRateAction);
+			tfAgeRate.addActionListener(ageRateAction);
+			
 			
 			JLabel lbBreedValue = new ControlLabel("출산하기 위해 채워야하는 포만감 % ");
-//			lbBreedValue.setFont(new Font("굴림체",Font.PLAIN,12));
+			lbBreedValue.setFont(new Font("굴림체",Font.PLAIN,13));
 			lbBreedValueValue = new ControlLabel(Integer.toString(GameField.breedValue));
 			tfBreedValue = new JTextField(3);
 			tfBreedValue.setText(lbBreedValueValue.getText());
 			JButton btnBreedValue = new RoundedButton("적용");
-			btnBreedValue.addActionListener(new ActionListener() {
+			ActionListener breedValueAction = new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					String value = tfBreedValue.getText();
@@ -184,14 +209,16 @@ public class GameMain extends JFrame{
 						lbBreedValueValue.setText("ERR");
 					}
 				}
-			});
+			};
+			btnBreedValue.addActionListener(breedValueAction);
+			tfBreedValue.addActionListener(breedValueAction);
 			
-			JLabel lbBreedReadyValue = new ControlLabel("번식 준비 기준 ~100% ");
+			JLabel lbBreedReadyValue = new ControlLabel("번식 준비 기준 % ");
 			lbBreedReadyValueValue = new ControlLabel(Integer.toString(GameField.breedReadyValue));
 			tfBreedReadyValue = new JTextField(3);
 			tfBreedReadyValue.setText(lbBreedReadyValueValue.getText());
 			JButton btnBreedReadyValue = new RoundedButton("적용");
-			btnBreedReadyValue.addActionListener(new ActionListener() {
+			ActionListener breedReadyAction = new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					String value = tfBreedReadyValue.getText();
@@ -207,14 +234,16 @@ public class GameMain extends JFrame{
 						lbBreedReadyValueValue.setText("ERR");
 					}
 				}
-			});
+			};
+			btnBreedReadyValue.addActionListener(breedReadyAction);
+			tfBreedReadyValue.addActionListener(breedReadyAction);
 
 			JLabel lbMaxIndependence = new ControlLabel("새끼가 독립하기 까지 먹이 수 ");
 			lbMaxIndependenceValue= new ControlLabel(Integer.toString(GameField.maxIndependence));
 			tfMaxIndependence = new JTextField(3);
 			tfMaxIndependence.setText(lbMaxIndependenceValue.getText());
 			JButton btnMaxIndependence = new RoundedButton("적용");
-			btnMaxIndependence.addActionListener(new ActionListener() {
+			ActionListener maxIndependenceAction = new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					String value = tfMaxIndependence.getText();
@@ -230,14 +259,16 @@ public class GameMain extends JFrame{
 						lbMaxIndependenceValue.setText("ERR");
 					}
 				}
-			});
+			};
+			btnMaxIndependence.addActionListener(maxIndependenceAction);
+			tfMaxIndependence.addActionListener(maxIndependenceAction);
 			
 			JLabel lbSearchScale = new ControlLabel("먹이 탐색 배율 ");
 			lbSearchScaleValue= new ControlLabel(Integer.toString(GameField.searchScale));
 			tfSearchScale = new JTextField(3);
 			tfSearchScale.setText(lbSearchScaleValue.getText());
 			JButton btnSearchScale = new RoundedButton("적용");
-			btnSearchScale.addActionListener(new ActionListener() {
+			ActionListener searchScale = new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					String value = tfSearchScale.getText();
@@ -253,7 +284,9 @@ public class GameMain extends JFrame{
 						lbSearchScaleValue.setText("ERR");
 					}
 				}
-			});
+			};
+			btnSearchScale.addActionListener(searchScale);
+			tfSearchScale.addActionListener(searchScale);
 			
 			JButton resetButton = new RoundedButton("초기화");
 			resetButton.setBackground(new Color(0xcf433c));
@@ -273,7 +306,9 @@ public class GameMain extends JFrame{
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					if(!gameField.getStarted()) {
-						gameField.start();
+						if (gameField.timeStamp <= 0) {		
+							gameField.start();
+						}
 					} else {
 						JOptionPane.showMessageDialog(null,"이미 시작 되었습니다.", "경고",JOptionPane.WARNING_MESSAGE);
 					}
@@ -349,39 +384,32 @@ public class GameMain extends JFrame{
 			GridBagPanel giraffeControlPanel = new GridBagPanel();
 			giraffeControlPanel.setBackground(null);
 			giraffeControlPanel.setSize(controlPanelWidth,summonPanel.getHeight());
-			
-//			this.setLayout(new FlowLayout(FlowLayout.LEFT,5,10));
+
 			this.setSize(300, 1050);
 			this.add(timeLabel);
 			this.add(control1);
 			this.add(summonPanel);
-			JButton loginBtn = new JButton("login");
-			loginBtn.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					String id = JOptionPane.showInputDialog("ID 입력");
-					String pw = JOptionPane.showInputDialog("PW 입력");
-					dao.login(id,pw);
-					gameField.startTime();
-				}
-			});
+//			JButton loginBtn = new JButton("login");
+//			loginBtn.addActionListener(new ActionListener() {
+//				@Override
+//				public void actionPerformed(ActionEvent e) {
+//					String id = JOptionPane.showInputDialog("ID 입력");
+//					String pw = JOptionPane.showInputDialog("PW 입력");
+//					dao.login(id,pw);
+//					gameField.startTime();
+//				}
+//			});
 			JButton logoutBtn = new JButton("logout");
 			logoutBtn.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					JOptionPane saveMsg = new JOptionPane();
-//					saveMsg.showMessageDialog(null, "데이터 저장 중 ....");
 					dao.logout();
 					System.exit(0);
 				}
 			});
-			this.add(loginBtn);
+//			this.add(loginBtn);
 			this.add(logoutBtn);
-//			this.add(giraffeControlPanel);
-//			this.insert(lbAmount, 0, 0, 1, 1);
-//			this.insert(grfAmount, 1, 0, 3, 1);
-//			this.insert(lbNeckAverage, 0, 1, 1, 1);
-//			this.insert(grfNeckAverage, 1, 1, 3, 1);
 		}
 		
 		public void updateControlPanel() {
@@ -391,8 +419,13 @@ public class GameMain extends JFrame{
 		class TreeSummonAction implements ActionListener {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				treePlacing = true;
-				treePlaceHeight = treeSlider.getValue();
+				if(GameField.trees.size() < 5) {
+					treePlacing = true;
+					treePlaceHeight = treeSlider.getValue();
+				} else {
+					JOptionPane.showMessageDialog(null, "나무는 최대 5개 까지만 생성할 수 있습니다.", "경고", JOptionPane.WARNING_MESSAGE);
+					return;
+				}
 			}
 		}
 		class TreeSummonSliderChanged implements ChangeListener {
@@ -414,16 +447,19 @@ public class GameMain extends JFrame{
 			String[] giraffesTableHeaders = {"ID","BIRTH DATE","NECK"};
 			giraffesTableModel = new DefaultTableModel(null,giraffesTableHeaders);
 			JTable giraffesTable = new JTable(giraffesTableModel);
+
+			String[] giraffesHeightTableHeaders = {"seq","avr"};
+			giraffesHeightTableModel = new DefaultTableModel(null,giraffesHeightTableHeaders);
+			JTable giraffesHeightTable = new JTable(giraffesHeightTableModel);
+			
+			
 			
 			this.setLayout(new GridLayout(1,3));
 			JPanel status1 = new JPanel();
 			status1.setBackground(null);
-			JPanel status2 = new JPanel();
-			status2.setBackground(null);
 			this.add(new JScrollPane(giraffesTable));
-			
+			this.add(new JScrollPane(giraffesHeightTable));
 			this.add(status1);
-			this.add(status2);
 		}
 		@Override
 		public void paintComponent(Graphics g) {
@@ -432,7 +468,12 @@ public class GameMain extends JFrame{
 		}
 	}
 	
-	GameMain() {
+	public void gameDispose() {
+		new LoginFrame();
+		this.dispose();
+	}
+	
+	public GameMain() {
 		
 		this.setTitle("ALICE");
 		this.setSize(1650,1050);
@@ -463,11 +504,23 @@ public class GameMain extends JFrame{
 			@Override
 			public void windowClosing(WindowEvent e) {
 				dao.logout();
-				System.exit(0);
+				gameDispose();
 			}
 		});
 		
 		dao = new AliceDAO(this,gameField);
+		if(dao.getUserPK() < 0) {
+			JOptionPane.showMessageDialog(null, "유저를 찾을 수 없습니다.", "불러오기 실패", JOptionPane.WARNING_MESSAGE);
+			gameDispose();
+			return;
+		}
+		String loadResult = dao.loadData();
+		if (loadResult == ActionTypes.LOAD_SUCCESS) {
+			updatePanel();
+			JOptionPane.showMessageDialog(null, "불러오기에 성공했습니다.", "불러오기 성공", JOptionPane.INFORMATION_MESSAGE);
+		} else {
+			JOptionPane.showMessageDialog(null, "불러오기에 실패했습니다.", "불러오기 실패", JOptionPane.WARNING_MESSAGE);
+		}
 	}
  	
 	public static void main(String[] args) {

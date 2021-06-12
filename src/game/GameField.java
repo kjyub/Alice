@@ -11,14 +11,16 @@ import java.awt.event.MouseEvent;
 
 public class GameField extends JPanel {
 	
-	
+	public static final int AverageTimeUnit = 10;
 	
 	// 상태 값들 - db 저장
 	public static long timeStamp = 0;
-	public static boolean timeStopFlag = false;
+	public static boolean timeStopFlag = true;
 	
 	public static Vector<Giraffe> giraffes = new Vector<Giraffe>();
 	public static Vector<Tree> trees = new Vector<Tree>();
+	public static Vector<Float> giraffeAverages = new Vector<Float>();
+	public static float giraffeAverage = (float)0.0;
 	
 	public static int maxGiraffeID = 0;
 	
@@ -96,7 +98,7 @@ public class GameField extends JPanel {
 	Vector<Tree> getFeeds() {
 		return this.trees;
 	}
-	void updateAmount() {
+	public void updateAmount() {
 		GameMain.grfAmount.setText(Integer.toString(this.giraffes.size()));
 		GameMain.giraffesTableModel.setNumRows(0);
 		int neckSum = 0;
@@ -109,10 +111,21 @@ public class GameField extends JPanel {
 			tableRow.add(Integer.toString(grf.neck));
 			GameMain.giraffesTableModel.addRow(tableRow);
 		}
+		
 		System.out.println("업데이트 ! "+neckSum+","+giraffes.size());
+		giraffeAverage = (float) neckSum/giraffes.size();
 		if (giraffes.size() > 0) {
-			GameMain.grfNeckAverage.setText(String.format("%.1f", (float) neckSum/giraffes.size()));
+			GameMain.grfNeckAverage.setText(String.format("%.1f", giraffeAverage));
 		}
+	}
+	
+	
+	void updateAverages() {
+		giraffeAverages.add(giraffeAverage);
+		Vector<String> tableRow = new Vector<String>();
+		tableRow.add(getTimeStampToString());
+		tableRow.add(Float.toString(giraffeAverage));
+		GameMain.giraffesHeightTableModel.addRow(tableRow);
 	}
 	
 	boolean getStarted() {
@@ -122,13 +135,16 @@ public class GameField extends JPanel {
 	void start() {
 		this.summon(5);
 		this.started = true;
+		this.timeStopFlag = true;
 		this.startTime();
 	}
 	
 	void reset() {
 		giraffes = new Vector<Giraffe>();
 		trees = new Vector<Tree>();
+		giraffeAverages = new Vector<Float>();
 		GameMain.giraffesTableModel.setNumRows(0);
+		GameMain.giraffesHeightTableModel.setNumRows(0);
 		GameMain.grfAmount.setText(Integer.toString(this.giraffes.size()));
 		GameMain.grfNeckAverage.setText("0");
 		this.started = false;
@@ -157,8 +173,11 @@ public class GameField extends JPanel {
 		}
 	}
 	
-	void startTime() {
-		this.timeStopFlag = false;
+	public void startTime() {
+		if(!timeStopFlag) {
+			return;
+		}
+		timeStopFlag = false;
 		Thread timeThread = new Thread(new StartTime());
 		timeThread.start();
 	}
@@ -172,14 +191,27 @@ public class GameField extends JPanel {
 		
 		return hs+":"+ms+":"+ss;
 	}
+	public static String getTimeStampToString(int time) {
+		int s = (int) time%60;
+		int m = (int) time/60;
+		int h = (int) time/3600;
+		String ss = s < 10 ? "0"+Integer.toString(s) : Integer.toString(s);
+		String ms = m < 10 ? "0"+Integer.toString(m) : Integer.toString(m);
+		String hs = h < 10 ? "0"+Integer.toString(h) : Integer.toString(h);
+		
+		return hs+":"+ms+":"+ss;
+	}
 	
 	// 시계 시작
 	class StartTime implements Runnable {
 		@Override
 		public synchronized void run() {
-			// 이동이 멈추면 중단
 			while(!GameField.timeStopFlag){
 				GameField.timeStamp++;
+				// AverageTimeUnit 초 마다 한번씩 목 길이 평균 데이터 업데이트
+				if (GameField.timeStamp % AverageTimeUnit == 0) {
+					updateAverages();
+				}
 				GameMain.timeLabel.setText(getTimeStampToString());
 				try {
 					Thread.sleep(1000);
@@ -187,7 +219,7 @@ public class GameField extends JPanel {
 					e.printStackTrace();
 				}
 			}
-			GameField.timeStopFlag = false;
+//			GameField.timeStopFlag = false;
 			GameField.timeStamp = 0;
 			GameMain.timeLabel.setText(getTimeStampToString());
 		}

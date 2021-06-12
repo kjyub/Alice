@@ -1,4 +1,4 @@
-package ui;
+package components;
 import java.awt.Color;  
 
 import java.awt.Font;  
@@ -15,25 +15,25 @@ public class HintTextField extends JTextField {
 
   
 
-  Font gainFont = new Font("Tahoma", Font.PLAIN, 11);  
+	Font gainFont = new Font("Tahoma", Font.PLAIN, 11);  
 
-  Font lostFont = new Font("Tahoma", Font.ITALIC, 11);  
-
-  
-
-  public HintTextField(final String hint) {  
+	Font lostFont = new Font("Tahoma", Font.ITALIC, 11);  
 
   
 
-    setText(hint);  
-
-    setFont(lostFont);  
-
-    setForeground(Color.GRAY);  
+	public HintTextField(final String hint) {  
 
   
 
-    this.addFocusListener(new FocusAdapter() {  
+		setText(hint);  
+
+		setFont(lostFont);  
+
+		setForeground(Color.GRAY);  
+
+  
+
+		this.addFocusListener(new FocusAdapter() {  
 
   
 

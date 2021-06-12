@@ -3,12 +3,8 @@ package db;
 import java.sql.*;
 import java.util.*;
 
-import game.GameField;
-import game.GameMain;
-import game.Giraffe;
-import game.GiraffeVO;
-import game.Tree;
-import game.TreeVO;
+import game.*;
+import libs.ActionTypes;
 
 public class AliceDAO {
 	
@@ -19,6 +15,7 @@ public class AliceDAO {
 	private static final String LOAD_USER = "select * from userTBL where pk=? ";
 	private static final String LOAD_GIRAFFES = "select * from giraffeTBL where user_pk=? ";
 	private static final String LOAD_TREES = "select * from treeTBL where user_pk=? ";
+	private static final String LOAD_HEIGHTS = "select * from heightTBL where user_pk=? ";
 	private static final String UPDATE_USER = "update userTBL set "
 			+ "timeStamp=?, timeStopFlag=?, maxGiraffeID=?, searchScale=?, ageRate=?, breedReadyValue=?, "
 			+ "breedValue=?, maxIndependence=?, started=?, mutantProb=?, sizeScale=?, subjectInfo=? "
@@ -30,21 +27,35 @@ public class AliceDAO {
 	private static final String UPDATE_TREES = "insert into treeTBL("
 			+ "length,leaf0,leaf1,leaf2,x,y,user_pk"
 			+ ") values (?,?,?,?,?,?,?)";
+	private static final String UPDATE_HEIGHTS = "insert into heightTBL("
+			+ "seq,avr,user_pk"
+			+ ") values (?,?,?)";
 	private static final String DELETE_GIRAFFES = "delete from giraffeTBL where user_pk=?";
 	private static final String DELETE_TREES = "delete from treeTBL where user_pk=?";
+	private static final String DELETE_HEIGHTS = "delete from heightTBL where user_pk=?";
 	private static final String REGIST = "insert into userTBL("
 			+ "timeStamp,timeStopFlag,maxGiraffeID,searchScale,ageRate,breedReadyValue,breedValue,maxIndependence,started,mutantProb,sizeScale,subjectInfo,id,pw"
 			+ ") values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+	
+	private static int user_pk = -1;
 	
 	Connection connection=null;
 	PreparedStatement stmt = null;
 	GameMain gameMain;
 	GameField gameField;
 	
+	public AliceDAO() {
+		System.out.println("hi"+ActionTypes.LOAD_FAILED);
+
+	}
 	
 	public AliceDAO(GameMain gm,GameField gf) {
 		this.gameMain = gm;
 		this.gameField = gf;
+	}
+	
+	public int getUserPK() {
+		return this.user_pk;
 	}
 	
    	void dbConnect() {
@@ -91,7 +102,10 @@ public class AliceDAO {
    		}
    	}
    	
-   	public void login(String id,String pw) {
+   	public String login(String id,String pw) {
+   		if (id.length()<1 || pw.length()<1) {
+   			return ActionTypes.INVALID_INPUT;
+   		}
    		dbConnect();
    		ResultSet rs = null;
    		try {
@@ -101,31 +115,32 @@ public class AliceDAO {
 			rs = stmt.executeQuery();
 			if(rs.next()) {
 				if(rs.getBoolean("loggedIn")) {
-					System.out.println("is logged in");
-					return;
+			   		dbDisconnect();
+					return ActionTypes.LOGGED_IN;
 				}
-				// setLoggedIn
-				GameMain.user_pk = rs.getInt("pk");
+				this.user_pk = rs.getInt("pk");
 				stmt = connection.prepareStatement(SET_LOGIN);
-				stmt.setInt(1, GameMain.user_pk);
+				stmt.setInt(1, this.user_pk);
 				int result = stmt.executeUpdate();
-				System.out.println("Login Result : "+result);
-				loadUser(GameMain.user_pk);
-				loadGiraffes(GameMain.user_pk);
-				loadTrees(GameMain.user_pk);
-				return;
+		   		dbDisconnect();
+				return ActionTypes.LOGIN_SUCCESS;
 			}
-			System.out.println("REGIST!");
-			if (checkID(id)) {				
-				System.out.println("Wrong password");
+			if (checkID(id)) {
+		   		dbDisconnect();
+				return ActionTypes.WRONG_PASSWORD;
 			} else {
-				regist(id,pw);
+				int result = regist(id,pw);
+				if (result == 1) {
+			   		dbDisconnect();
+					return ActionTypes.REGIST_SUCCESS;
+				}
 			}
 		} catch (SQLException e) {
 			System.out.println("SQL Exception login : "+e);
 			e.printStackTrace();
 		}
    		dbDisconnect();
+   		return ActionTypes.LOGIN_FAILED;
    	}
    	
    	boolean checkID(String id) {
@@ -146,7 +161,7 @@ public class AliceDAO {
    		return false;
    	}
    	
-   	void regist(String id,String pw) {
+   	int regist(String id,String pw) {
    		try {
    			refreshStmt();
 			stmt = connection.prepareStatement(REGIST);
@@ -175,20 +190,36 @@ public class AliceDAO {
 			stmt.setString(2, pw);
 			rs = stmt.executeQuery();
 			if(rs.next()) {
+				this.user_pk = rs.getInt("pk");
+				
 				stmt = connection.prepareStatement(SET_LOGIN);
-				stmt.setInt(1, GameMain.user_pk);
+				stmt.setInt(1, this.user_pk);
 				stmt.executeUpdate();
-				return;
+				return 1;
 			}
 		} catch (SQLException e) {
 			System.out.println("SQL Exception login : "+e);
 			e.printStackTrace();
+			return 0;
 		}
+   		return 0;
    	}
    	
-   	void loadUser(int user_pk) {
+   	public String loadData() {
+   		dbConnect();
+   		boolean lu = loadUser();
+   		boolean lg = loadGiraffes();
+   		boolean lt = loadTrees();
+   		boolean lh = loadHeights();
+   		dbDisconnect();
+   		if (lu && lg && lt && lh) {
+   			return ActionTypes.LOAD_SUCCESS;
+   		}
+   		return ActionTypes.LOAD_FAILED;
+   	}
+   	
+   	public boolean loadUser() {
    		ResultSet rs = null;
-		System.out.println("hi");
    		try {
    			refreshStmt();
 			stmt = connection.prepareStatement(LOAD_USER);
@@ -196,7 +227,7 @@ public class AliceDAO {
 			System.out.println(stmt);
 			rs = stmt.executeQuery();
 			if(rs.next()) {
-				GameMain.user_pk = rs.getInt("pk");
+				this.user_pk = rs.getInt("pk");
 				GameField.timeStamp = rs.getLong("timeStamp");
 				GameField.timeStopFlag = rs.getBoolean("timeStopFlag");
 				GameField.maxGiraffeID = rs.getInt("maxGiraffeID");
@@ -211,22 +242,21 @@ public class AliceDAO {
 				GameMain.sizeScale = rs.getFloat("sizeScale");
 				GameMain.subjectInfo = rs.getBoolean("subjectInfo");
 				System.out.println("user loaded");
-				GameMain.updatePanel();
 			}
+			return true;
 		} catch (SQLException e) {
 			System.out.println("SQL Exception loadUser : "+e);
 			e.printStackTrace();
 		}
+   		return false;
    	}
    	
-   	void loadGiraffes(int user_pk) {
+   	public boolean loadGiraffes() {
    		ResultSet rs = null;
-		System.out.println("hi");
    		try {
    			refreshStmt();
 			stmt = connection.prepareStatement(LOAD_GIRAFFES);
 			stmt.setInt(1, user_pk);
-			System.out.println(stmt);
 			rs = stmt.executeQuery();
 			ArrayList<GiraffeVO> grfs = new ArrayList<GiraffeVO>();
 			while(rs.next()) {
@@ -250,20 +280,20 @@ public class AliceDAO {
 				grfs.add(grf);
 			}
 			gameField.summon(grfs);
+			return true;
 		} catch (SQLException e) {
 			System.out.println("SQL Exception loadUser : "+e);
 			e.printStackTrace();
 		}
+   		return false;
    	}
    	
-   	void loadTrees(int user_pk) {
+   	public boolean loadTrees() {
    		ResultSet rs = null;
-		System.out.println("hi");
    		try {
    			refreshStmt();
 			stmt = connection.prepareStatement(LOAD_TREES);
 			stmt.setInt(1, user_pk);
-			System.out.println(stmt);
 			rs = stmt.executeQuery();
 			ArrayList<TreeVO> trees = new ArrayList<TreeVO>();
 			while(rs.next()) {
@@ -277,13 +307,35 @@ public class AliceDAO {
 				trees.add(vo);
 			}
 			gameField.treeSummon(trees);
+			return true;
 		} catch (SQLException e) {
 			System.out.println("SQL Exception loadTree : "+e);
 			e.printStackTrace();
 		}
+		return false;
    	}
    	
-   	void updateUser(int user_pk) {
+   	public boolean loadHeights() {
+   		ResultSet rs = null;
+   		try {
+   			refreshStmt();
+			stmt = connection.prepareStatement(LOAD_HEIGHTS);
+			stmt.setInt(1, user_pk);
+			rs = stmt.executeQuery();
+			Vector<Float> heights = new Vector<Float>();
+			while(rs.next()) {
+				heights.add(rs.getFloat("avr"));
+			}
+			gameField.giraffeAverages = heights;
+			return true;
+		} catch (SQLException e) {
+			System.out.println("SQL Exception loadTree : "+e);
+			e.printStackTrace();
+		}
+		return false;
+   	}
+   	
+   	public boolean updateUser() {
    		try {
    			refreshStmt();
 			stmt = connection.prepareStatement(UPDATE_USER);
@@ -299,20 +351,22 @@ public class AliceDAO {
 			stmt.setInt(10, GameMain.mutantProb);
 			stmt.setFloat(11, GameMain.sizeScale);
 			stmt.setBoolean(12, GameMain.subjectInfo);
-			stmt.setInt(13, user_pk);
+			stmt.setInt(13, this.user_pk);
 			int result = stmt.executeUpdate();
 			System.out.println("Update User Result : "+result);
+			return true;
 		} catch (SQLException e) {
 			System.out.println("SQL Exception updateUser : "+e);
 			e.printStackTrace();
 		}
+		return false;
    	}
    	
-   	void updateGiraffes(int user_pk) {
+   	public boolean updateGiraffes() {
    		try {
 			refreshStmt();
 			stmt = connection.prepareStatement(DELETE_GIRAFFES);
-			stmt.setInt(1, GameMain.user_pk);
+			stmt.setInt(1, this.user_pk);
 			stmt.executeUpdate();
 			for (Giraffe grf : GameField.giraffes) {		
 				refreshStmt();
@@ -334,21 +388,23 @@ public class AliceDAO {
 				stmt.setBoolean(14, vo.isReflected());
 				stmt.setBoolean(15, vo.isDetected());
 				stmt.setBoolean(16, vo.isDied());
-				stmt.setInt(17, user_pk);
+				stmt.setInt(17, this.user_pk);
 				stmt.executeUpdate();
 			}
 			System.out.println("Update User Result : ");
+			return true;
 		} catch (SQLException e) {
 			System.out.println("SQL Exception updateGiraffes : "+e);
 			e.printStackTrace();
 		}
+		return false;
    	}
    	
-   	void updateTrees(int user_pk) {
+   	public boolean updateTrees() {
    		try {
 			refreshStmt();
 			stmt = connection.prepareStatement(DELETE_TREES);
-			stmt.setInt(1, GameMain.user_pk);
+			stmt.setInt(1, this.user_pk);
 			stmt.executeUpdate();
 			int successResult = 0;
 			for (Tree tree : GameField.trees) {		
@@ -361,24 +417,52 @@ public class AliceDAO {
 				stmt.setInt(4, vo.getLeaf2());
 				stmt.setInt(5, vo.getX());
 				stmt.setInt(6, vo.getY());
-				stmt.setInt(7, user_pk);
+				stmt.setInt(7, this.user_pk);
 				successResult += stmt.executeUpdate();
 			}
 			System.out.println("Update Tree Result : "+successResult);
+			return true;
 		} catch (SQLException e) {
-			System.out.println("SQL Exception updateGiraffes : "+e);
+			System.out.println("SQL Exception updateTrees : "+e);
 			e.printStackTrace();
 		}
+		return false;
+   	}
+   	
+   	public boolean updateHeights() {
+   		try {
+			refreshStmt();
+			stmt = connection.prepareStatement(DELETE_HEIGHTS);
+			stmt.setInt(1, this.user_pk);
+			int result = stmt.executeUpdate();
+			System.out.println(stmt+", result : "+result);
+			for (int i=0; i<GameField.giraffeAverages.size(); i++) {		
+				refreshStmt();
+				stmt = connection.prepareStatement(UPDATE_HEIGHTS);
+				stmt.setInt(1, i);
+				stmt.setFloat(2, GameField.giraffeAverages.get(i));
+				stmt.setInt(3, this.user_pk);
+				System.out.println(stmt);
+				stmt.executeUpdate();
+			}
+			System.out.println("Update Tree Result : ");
+			return true;
+		} catch (SQLException e) {
+			System.out.println("SQL Exception updateHeights : "+e);
+			e.printStackTrace();
+		}
+		return false;
    	}
    	
    	public void logout() {
    		dbConnect();
-   		updateUser(GameMain.user_pk);
-   		updateGiraffes(GameMain.user_pk);
-   		updateTrees(GameMain.user_pk);
+   		updateUser();
+   		updateGiraffes();
+   		updateTrees();
+   		updateHeights();
    		try {
 			stmt = connection.prepareStatement(LOGOUT);
-			stmt.setInt(1, GameMain.user_pk);
+			stmt.setInt(1, this.user_pk);
 			stmt.executeUpdate();
 		} catch (SQLException e) {
 			System.out.println("SQL Exception logout : "+e);
