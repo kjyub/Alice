@@ -3,12 +3,12 @@ package db;
 import java.sql.*;
 import java.util.*;
 
-import ui.GameField;
-import ui.GameMain;
-import ui.Giraffe;
-import ui.GiraffeVO;
-import ui.Tree;
-import ui.TreeVO;
+import game.GameField;
+import game.GameMain;
+import game.Giraffe;
+import game.GiraffeVO;
+import game.Tree;
+import game.TreeVO;
 
 public class AliceDAO {
 	

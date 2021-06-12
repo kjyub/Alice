@@ -7,7 +7,7 @@ import java.io.*;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
-import ui.Subject;
+import game.Subject;
 
 public class utils {
 	public static Image getImage(String src) {
