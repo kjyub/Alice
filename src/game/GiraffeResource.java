@@ -5,7 +5,8 @@ import java.awt.Image;
 import libs.utils;
 
 public class GiraffeResource {
-	private String imgSrc = "resource/subjects/giraffe01/";
+	ClassLoader cl = this.getClass().getClassLoader();
+	private static String imgSrc = "resource/subjects/giraffe01/";
 	public int headFrameCount = 1;
 	public int headEatFrameCount = 3;
 	public int neckFrameCount = 1;
@@ -28,6 +29,7 @@ public class GiraffeResource {
 	private Image[] babyImgs = new Image[babyFrameCount];
 	
 	GiraffeResource() {
+//		cl.getResource("resource/subjects/giraffe01/head1.png");
 		for(int i=0; i<headFrameCount; i++) {
 			headImgs[i] = utils.getImage(imgSrc+"head"+Integer.toString(i)+".png");
 		}

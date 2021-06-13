@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry excluding="resource/" kind="src" path="src"/>
-	<classpathentry excluding="src/|images/|src/resource/|resource/subjects/giraffe01/|resource/subjects/tree/" kind="src" path=""/>
 	<classpathentry kind="src" path="images"/>
 	<classpathentry kind="src" path="src/resource"/>
 	<classpathentry kind="src" path="resource/subjects/giraffe01"/>
@@ -16,5 +15,7 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="/Users/kjyub/eclipse/jfree/jcommon-1.0.23.jar"/>
+	<classpathentry kind="lib" path="/Users/kjyub/eclipse/jfree/jfreechart-1.0.19.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

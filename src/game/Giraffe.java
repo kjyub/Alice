@@ -8,6 +8,8 @@ import libs.utils;
 public class Giraffe extends Subject{
 	GiraffeResource resource;
 	public final int DefaultNeck = 10;
+	public final int MinNeck = 5;
+	public final int MaxNeck = 30;
 	protected int neck;
 	protected int headFrame = 0;
 	protected int neckFrame = 0;
@@ -17,8 +19,8 @@ public class Giraffe extends Subject{
 	Giraffe(GameField gf) {
 		super(gf,gf.getFeeds(),50);
 
-		this.neck = neckMutant(10);
-//		this.neck = DefaultNeck;
+//		this.neck = neckMutant(10);
+		this.neck = DefaultNeck;
 		this.setSize(new Dimension(resource.TotalWidth,
 				(resource.HeadHeight+resource.BodyHeight+this.getNeckHeight())
 				));
@@ -35,6 +37,9 @@ public class Giraffe extends Subject{
 		this.neck = neckMutant(gene);
 		gf.maxGiraffeID++;
 		this.id = gf.maxGiraffeID;
+		this.setSize(new Dimension(resource.TotalWidth,
+				(resource.HeadHeight+resource.BodyHeight+this.getNeckHeight())
+				));
 		gf.updateAmount();
 	}
 	Giraffe(GameField gf,GiraffeVO vo) {
@@ -55,6 +60,9 @@ public class Giraffe extends Subject{
 		this.isReflected = vo.isReflected();
 		this.isDetected = vo.isDetected();
 		this.died = vo.isDied();
+		this.setSize(new Dimension(resource.TotalWidth,
+				(resource.HeadHeight+resource.BodyHeight+this.getNeckHeight())
+				));
 	}
 	public GiraffeVO parseVO() {
 		GiraffeVO vo = new GiraffeVO();
@@ -82,7 +90,14 @@ public class Giraffe extends Subject{
 			int[] changes = {-1,-2,1,2};
 //			int[] changes = {-3,-6,3,6};
 			int pick = (int) (Math.random() * 4);
-			return neck + changes[pick];
+			int newNeck = neck + changes[pick];
+			if (newNeck > MaxNeck) {
+				newNeck = MaxNeck;
+			} 
+			if (newNeck < MinNeck){
+				newNeck = MinNeck;
+			}
+			return newNeck; 
 		} else {
 			return neck;
 		}

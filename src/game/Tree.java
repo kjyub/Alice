@@ -8,6 +8,9 @@ import java.util.*;
 public class Tree extends Subject {
 	TreeResource rsrc = null;
 	static final int LEAF_HEIGHTS = 3;
+	static final int LEAF0_AMOUNT = 10;
+	static final int LEAF1_AMOUNT = 12;
+	static final int LEAF2_AMOUNT = 10;
 	protected HashMap<Integer,Integer> leafs = new HashMap<Integer,Integer>();
 	protected int length;
 	GameField gameField;
@@ -18,17 +21,17 @@ public class Tree extends Subject {
 	
 	public Tree(GameField gf,TreeResource rsrc) {
 		super(gf,null,0);
-		this.setSize(new Dimension(rsrc.TotalWidth,length*rsrc.TreeLengthUnit));
+		this.setSize(new Dimension(rsrc.TotalWidth,rsrc.NeckHeight+getNeckHeight()));
 		this.rsrc = rsrc;
 	}
 	
 	public Tree(GameField gf,TreeResource rsrc,int length) {
 		this(gf,rsrc);
-		leafs.put(length-1, 10);
-		leafs.put(length, 12);
-		leafs.put(length+1, 10);
+		leafs.put(length-1, LEAF0_AMOUNT);
+		leafs.put(length, LEAF1_AMOUNT);
+		leafs.put(length+1, LEAF2_AMOUNT);
 		this.length = length;
-		this.setSize(new Dimension(rsrc.TotalWidth,length*rsrc.TreeLengthUnit));
+		this.setSize(new Dimension(rsrc.TotalWidth,rsrc.NeckHeight+getNeckHeight()));
 	}
 	
 	public Tree(GameField gf,TreeResource rsrc,TreeVO vo) {
@@ -38,7 +41,7 @@ public class Tree extends Subject {
 		this.leafs.put(this.length-1,vo.getLeaf0());
 		this.leafs.put(this.length,vo.getLeaf1());
 		this.leafs.put(this.length+1,vo.getLeaf2());
-		this.setSize(new Dimension(rsrc.TotalWidth,length*rsrc.TreeLengthUnit));
+		this.setSize(new Dimension(rsrc.TotalWidth,rsrc.NeckHeight+getNeckHeight()));
 	}
 	
 	public TreeVO parseVO() {
@@ -134,6 +137,18 @@ public class Tree extends Subject {
 		}
 	}
 	
+	private int allLeafs() {
+		int sum = 0;
+		for(int i=-1;i<2;i++) {
+			sum += this.leafs.get(length+i);
+		}
+		return sum;
+	}
+	
+	int getNeckHeight() {
+		return (rsrc.NeckHeight+((this.length-10)*rsrc.NeckHeightUnit));
+	}
+	
 	@Override
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
@@ -147,7 +162,12 @@ public class Tree extends Subject {
 			g = (Graphics2D)g;
 		    ((Graphics2D) g).setComposite(alphaComposite);
 		}
-		g.drawImage(rsrc.getTreeImg(0),this.getWidth(),0,-this.getWidth(),this.getHeight(),this);
+		g.drawImage(
+				rsrc.getTreeLeafImg(allLeafs()),
+				0,0,
+				this.getWidth(),this.getHeight(),
+				this);
+		g.drawImage(rsrc.getTreeNeckImg(0),0,rsrc.NeckHeight,this.getWidth(),getNeckHeight(),this);
 //		g.drawString("X,Y : "+this.getCenterPoint().x+","+this.getCenterPoint().y, 0, 10);
 		Object[] leafHeights = this.leafs.keySet().toArray();
 		for (int i=1; i<leafHeights.length+1;i++) {

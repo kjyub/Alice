@@ -4,6 +4,7 @@ import java.util.*;
 import javax.swing.*;
 
 import game.GameMain.ControlPanel;
+import libs.NeckGraph;
 
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -56,7 +57,7 @@ public class GameField extends JPanel {
 	}
 	void summon(int numGiraffes) {
 		for(int i=0; i<numGiraffes; i++) {
-			Giraffe grf = new Giraffe(this,10);
+			Giraffe grf = new Giraffe(this);
 			int x = (int) (Math.random()*FieldSize.width) + 1;
 			int y = (int) (Math.random()*(FieldSize.height - grf.getHeight())) + 1;
 			grf.setLocation(x, y);
@@ -77,7 +78,7 @@ public class GameField extends JPanel {
 		Tree tree = new Tree(this,tSrc,GameMain.treePlaceHeight);
 		trees.add(tree);
 		int treeWidth = tSrc.TotalWidth;
-		int treeHeight = GameMain.treePlaceHeight*tSrc.TreeLengthUnit;
+		int treeHeight = GameMain.treePlaceHeight*tSrc.NeckHeightUnit;
 		tree.setLocation(treePlaceX-(treeWidth/2),treePlaceY-(treeHeight/2));
 		this.add(tree);
 		tree.repaint();
@@ -99,11 +100,12 @@ public class GameField extends JPanel {
 		return this.trees;
 	}
 	public void updateAmount() {
-		GameMain.grfAmount.setText(Integer.toString(this.giraffes.size()));
+		Vector<Giraffe> copiedGiraffes = new Vector<Giraffe>(this.giraffes);
+		GameMain.grfAmount.setText(Integer.toString(copiedGiraffes.size()));
 		GameMain.giraffesTableModel.setNumRows(0);
 		int neckSum = 0;
-		System.out.println(this.giraffes.size());
-		for (Giraffe grf:giraffes) {
+		System.out.println(copiedGiraffes.size());
+		for (Giraffe grf:copiedGiraffes) {
 			neckSum += grf.neck;
 			Vector<String> tableRow = new Vector<String>();
 			tableRow.add(Integer.toString(grf.id));
@@ -111,21 +113,27 @@ public class GameField extends JPanel {
 			tableRow.add(Integer.toString(grf.neck));
 			GameMain.giraffesTableModel.addRow(tableRow);
 		}
-		
-		System.out.println("업데이트 ! "+neckSum+","+giraffes.size());
-		giraffeAverage = (float) neckSum/giraffes.size();
-		if (giraffes.size() > 0) {
+		if (copiedGiraffes.size() > 0) {
+			giraffeAverage = (float) neckSum/copiedGiraffes.size();
 			GameMain.grfNeckAverage.setText(String.format("%.1f", giraffeAverage));
+		} else {
+			giraffeAverage = -1;
+			timeStopFlag = true;
 		}
+		System.out.println("updateAmount");
 	}
 	
 	
 	void updateAverages() {
+		if(giraffeAverage < 0) {
+			return;
+		}
 		giraffeAverages.add(giraffeAverage);
 		Vector<String> tableRow = new Vector<String>();
 		tableRow.add(getTimeStampToString());
 		tableRow.add(Float.toString(giraffeAverage));
 		GameMain.giraffesHeightTableModel.addRow(tableRow);
+		System.out.println("updateAverages");
 	}
 	
 	boolean getStarted() {
@@ -137,6 +145,8 @@ public class GameField extends JPanel {
 		this.started = true;
 		this.timeStopFlag = true;
 		this.startTime();
+		this.updateAmount();
+		this.updateAverages();
 	}
 	
 	void reset() {
@@ -152,6 +162,8 @@ public class GameField extends JPanel {
 		this.repaint();
 		this.timeStopFlag=true;
 		this.maxGiraffeID = 0;
+		this.timeStamp = 0;
+		GameMain.timeLabel.setText(this.getTimeStampToString());
 	}
 	
 	class TreePlaceCursor extends MouseAdapter {
@@ -220,7 +232,7 @@ public class GameField extends JPanel {
 				}
 			}
 //			GameField.timeStopFlag = false;
-			GameField.timeStamp = 0;
+//			GameField.timeStamp = 0;
 			GameMain.timeLabel.setText(getTimeStampToString());
 		}
 	}
@@ -236,7 +248,7 @@ public class GameField extends JPanel {
 		    ((Graphics2D) g).setComposite(alphaComposite);
 
 			int treeWidth = tSrc.TotalWidth;
-			int treeHeight = GameMain.treePlaceHeight*tSrc.TreeLengthUnit;
+			int treeHeight = tSrc.NeckHeight + (GameMain.treePlaceHeight*tSrc.NeckHeightUnit);
 			g.drawImage(tSrc.getTreeImg(0),
 					treePlaceX-(treeWidth/2),treePlaceY-(treeHeight/2),
 					treeWidth,treeHeight,

@@ -3,6 +3,7 @@ package libs;
 import java.awt.*;
 import java.awt.image.*;
 import java.io.*;
+import java.net.URL;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -11,6 +12,9 @@ import game.Subject;
 
 public class utils {
 	public static Image getImage(String src) {
+		ImageIcon g = new ImageIcon(src);
+		return g.getImage();
+	}public static Image getImage(URL src) {
 		ImageIcon g = new ImageIcon(src);
 		return g.getImage();
 	}

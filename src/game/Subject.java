@@ -46,8 +46,8 @@ public abstract class Subject extends JPanel {
 	protected boolean eatReady = true; // eatCoolTime 끝나는걸 알
 	protected int cal = 3*GameField.ageRate; // 칼로리, 포만감 상승 수치 (1~100)
 	protected int age = 0; // 
-	protected static int searchWidth = 60 * GameField.searchScale;
-	protected static int searchHeight = 20 * GameField.searchScale;
+	protected static int searchWidth = 60;
+	protected static int searchHeight = 20;
 	public static int eatTime = 3000; // 먹이 먹는 시간
 	
 	Subject(GameField gf, Vector<Tree> feeds,int speed) {
@@ -235,12 +235,10 @@ public abstract class Subject extends JPanel {
 					grf.lastHeadDirection = Subject.ToLeft;
 				}
 			}
+			distance+=200;
 		}
 		void goWithCheckLimit() {
-			Point p = grf.getLocation();	
-			if(grf.id == 1) {				
-//				System.out.println(p);
-			}
+			Point p = grf.getLocation();
  			if (direction==ToUp) {
  				grf.setLocation(p.x, p.y-feet);
 				if(p.y < 0) {
@@ -286,13 +284,13 @@ public abstract class Subject extends JPanel {
 		
 		boolean searchVertical(int d,Point treeP) {
 			Point center = grf.getCenterPoint();
-			if (treeP.getY() >= (center.getY() - (searchWidth/2)) && treeP.getY() <= (center.getY() + (searchWidth/2))) {
+			if (treeP.getY() >= (center.getY() - ((searchWidth*GameField.searchScale)/2)) && treeP.getY() <= (center.getY() + ((searchWidth*GameField.searchScale)/2))) {
 				if (d>0) {
-					if(treeP.getX() >= center.getX() && treeP.getX() <= center.getX() + searchHeight) {
+					if(treeP.getX() >= center.getX() && treeP.getX() <= center.getX() + (searchHeight*GameField.searchScale)) {
 						return true;
 					}
 				} else {
-					if(treeP.getX() <= center.getX() && treeP.getX() >= center.getX() - searchHeight) {
+					if(treeP.getX() <= center.getX() && treeP.getX() >= center.getX() - (searchHeight*GameField.searchScale)) {
 						return true;
 					}
 				}
@@ -301,13 +299,13 @@ public abstract class Subject extends JPanel {
 		}
 		boolean searchHorizon(int d,Point treeP) {
 			Point center = grf.getCenterPoint();
-			if(treeP.getX() >= (center.getX() - (searchWidth/2)) && treeP.getX() <= (center.getX() + (searchWidth/2))) {
+			if(treeP.getX() >= (center.getX() - ((searchWidth*GameField.searchScale)/2)) && treeP.getX() <= (center.getX() + ((searchWidth*GameField.searchScale)/2))) {
 				if (d>0) {
-					if (treeP.getY() >= center.getY() && treeP.getY() <= center.getY() + searchHeight) {
+					if (treeP.getY() >= center.getY() && treeP.getY() <= center.getY() + (searchHeight*GameField.searchScale)) {
 						return true;
 					}
 				} else {
-					if (treeP.getY() <= center.getY() && treeP.getY() >= center.getY() - searchHeight) {
+					if (treeP.getY() <= center.getY() && treeP.getY() >= center.getY() - (searchHeight*GameField.searchScale)) {
 						return true;
 					}
 				}
@@ -315,15 +313,6 @@ public abstract class Subject extends JPanel {
 			return false;
 		}
 		Subject searchFeed() {
-//			if (grf.isDetected) {
-//				Point center = grf.getCenterPoint();
-//				if (center.getX() <= 800-(searchHeight/2) && center.getX() >= 800+(searchHeight/2)) {
-//					grf.isDetected = false;
-//				}
-//				if (center.getY() <= 600-(searchWidth/2) && center.getY() >= 600+(searchWidth/2)) {
-//					grf.isDetected = false;
-//				}
-//			}
 			boolean isFind = false;
 			for (Tree feed : feeds) {
 				// 목 길이가 나무보다 길어야 함

@@ -7,6 +7,7 @@ import javax.swing.JButton;
 public class RoundedButton extends JButton {
 		public RoundedButton(String s) {
 			super(s);
+			this.setOpaque(false);
 		}
 		@Override 
 		protected void paintComponent(Graphics g) { 

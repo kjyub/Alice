@@ -3,19 +3,23 @@ package db;
 import java.sql.*;
 import java.util.*;
 
+import javax.swing.table.DefaultTableModel;
+
 import game.*;
 import libs.ActionTypes;
 
 public class AliceDAO {
 	
-	private static final String LOGIN = "select pk,loggedIn from userTBL where id=? and pw=? ";
+	private static final String LOGIN = "select pk,id,loggedIn from userTBL where id=? and pw=? ";
 	private static final String CHECK_ID = "select loggedIn from userTBL where id=?";
 	private static final String SET_LOGIN = "update userTBL set loggedIn=true where pk=? ";
+	private static final String SET_LOGOUT = "update userTBL set loggedIn=false where pk=? ";
 	private static final String LOGOUT = "update userTBL set loggedIn=false where pk=? ";
 	private static final String LOAD_USER = "select * from userTBL where pk=? ";
 	private static final String LOAD_GIRAFFES = "select * from giraffeTBL where user_pk=? ";
 	private static final String LOAD_TREES = "select * from treeTBL where user_pk=? ";
 	private static final String LOAD_HEIGHTS = "select * from heightTBL where user_pk=? ";
+	private static final String LOAD_RANK = "select * from rankTBL order by avr desc";
 	private static final String UPDATE_USER = "update userTBL set "
 			+ "timeStamp=?, timeStopFlag=?, maxGiraffeID=?, searchScale=?, ageRate=?, breedReadyValue=?, "
 			+ "breedValue=?, maxIndependence=?, started=?, mutantProb=?, sizeScale=?, subjectInfo=? "
@@ -30,14 +34,21 @@ public class AliceDAO {
 	private static final String UPDATE_HEIGHTS = "insert into heightTBL("
 			+ "seq,avr,user_pk"
 			+ ") values (?,?,?)";
+	private static final String UPDATE_RANK = "update rankTBL set "
+			+ "avr=?, time=? "
+			+ "where user_pk=?";
 	private static final String DELETE_GIRAFFES = "delete from giraffeTBL where user_pk=?";
 	private static final String DELETE_TREES = "delete from treeTBL where user_pk=?";
 	private static final String DELETE_HEIGHTS = "delete from heightTBL where user_pk=?";
 	private static final String REGIST = "insert into userTBL("
 			+ "timeStamp,timeStopFlag,maxGiraffeID,searchScale,ageRate,breedReadyValue,breedValue,maxIndependence,started,mutantProb,sizeScale,subjectInfo,id,pw"
 			+ ") values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+	private static final String INSERT_RANK = "insert into rankTBL("
+			+ "id,avr,time,user_pk"
+			+ ") values (?,0.0,0,?)";
 	
 	private static int user_pk = -1;
+	private static String user_id = "";
 	
 	Connection connection=null;
 	PreparedStatement stmt = null;
@@ -90,6 +101,10 @@ public class AliceDAO {
    		}
    	}
    	
+   	public String getID() {
+   		return this.user_id;
+   	}
+   	
    	void refreshStmt() {
    		if(stmt != null) {
    			try {
@@ -114,11 +129,12 @@ public class AliceDAO {
 			stmt.setString(2, pw);
 			rs = stmt.executeQuery();
 			if(rs.next()) {
+				this.user_pk = rs.getInt("pk");
+				this.user_id = rs.getString("id");
 				if(rs.getBoolean("loggedIn")) {
 			   		dbDisconnect();
 					return ActionTypes.LOGGED_IN;
 				}
-				this.user_pk = rs.getInt("pk");
 				stmt = connection.prepareStatement(SET_LOGIN);
 				stmt.setInt(1, this.user_pk);
 				int result = stmt.executeUpdate();
@@ -141,6 +157,22 @@ public class AliceDAO {
 		}
    		dbDisconnect();
    		return ActionTypes.LOGIN_FAILED;
+   	}
+   	
+   	public boolean setLogout() {
+   		dbConnect();
+   		try {
+			stmt = connection.prepareStatement(SET_LOGOUT);
+			stmt.setInt(1, this.user_pk);
+			stmt.executeUpdate();
+			dbDisconnect();
+	   		return true;
+		} catch (SQLException e) {
+			System.out.println("SQL Exception setLogout : "+e);
+			e.printStackTrace();
+		}
+   		dbDisconnect();
+   		return false;
    	}
    	
    	boolean checkID(String id) {
@@ -183,6 +215,7 @@ public class AliceDAO {
 			
 			stmt.executeUpdate();
 			
+			
 			ResultSet rs = null;
 			
 			stmt = connection.prepareStatement(LOGIN);
@@ -191,6 +224,11 @@ public class AliceDAO {
 			rs = stmt.executeQuery();
 			if(rs.next()) {
 				this.user_pk = rs.getInt("pk");
+				
+				stmt = connection.prepareStatement(INSERT_RANK);
+				stmt.setString(1, id);
+				stmt.setInt(2, this.user_pk);
+				stmt.executeUpdate();
 				
 				stmt = connection.prepareStatement(SET_LOGIN);
 				stmt.setInt(1, this.user_pk);
@@ -335,6 +373,33 @@ public class AliceDAO {
 		return false;
    	}
    	
+   	public void loadRank(DefaultTableModel model) {
+   		dbConnect();
+   		ResultSet rs = null;
+   		try {
+   			refreshStmt();
+			stmt = connection.prepareStatement(LOAD_RANK);
+			rs = stmt.executeQuery();
+			model.setNumRows(0);
+			int rank = 1;
+			while(rs.next()) {
+				Vector<String> row = new Vector<String>();
+				row.add(Integer.toString(rank++));
+				row.add(rs.getString("id"));
+				row.add(Float.toString(rs.getFloat("avr")));
+				row.add(GameField.getTimeStampToString(rs.getInt("time")));
+				model.addRow(row);
+			}
+	   		dbDisconnect();
+			return;
+		} catch (SQLException e) {
+			System.out.println("SQL Exception loadRank : "+e);
+			e.printStackTrace();
+		}
+   		dbDisconnect();
+		return;
+   	}
+   	
    	public boolean updateUser() {
    		try {
    			refreshStmt();
@@ -362,13 +427,13 @@ public class AliceDAO {
 		return false;
    	}
    	
-   	public boolean updateGiraffes() {
+   	public boolean updateGiraffes(Vector<Giraffe> copiedGiraffes) {
    		try {
 			refreshStmt();
 			stmt = connection.prepareStatement(DELETE_GIRAFFES);
 			stmt.setInt(1, this.user_pk);
 			stmt.executeUpdate();
-			for (Giraffe grf : GameField.giraffes) {		
+			for (Giraffe grf : copiedGiraffes) {		
 				refreshStmt();
 				stmt = connection.prepareStatement(UPDATE_GIRAFFES);
 				GiraffeVO vo = grf.parseVO();
@@ -400,14 +465,14 @@ public class AliceDAO {
 		return false;
    	}
    	
-   	public boolean updateTrees() {
+   	public boolean updateTrees(Vector<Tree> copiedTrees) {
    		try {
 			refreshStmt();
 			stmt = connection.prepareStatement(DELETE_TREES);
 			stmt.setInt(1, this.user_pk);
 			stmt.executeUpdate();
 			int successResult = 0;
-			for (Tree tree : GameField.trees) {		
+			for (Tree tree : copiedTrees) {		
 				refreshStmt();
 				stmt = connection.prepareStatement(UPDATE_TREES);
 				TreeVO vo = tree.parseVO();
@@ -429,20 +494,18 @@ public class AliceDAO {
 		return false;
    	}
    	
-   	public boolean updateHeights() {
+   	public boolean updateHeights(Vector<Float> copiedAverages) {
    		try {
 			refreshStmt();
 			stmt = connection.prepareStatement(DELETE_HEIGHTS);
 			stmt.setInt(1, this.user_pk);
 			int result = stmt.executeUpdate();
-			System.out.println(stmt+", result : "+result);
-			for (int i=0; i<GameField.giraffeAverages.size(); i++) {		
+			for (int i=0; i<copiedAverages.size(); i++) {		
 				refreshStmt();
 				stmt = connection.prepareStatement(UPDATE_HEIGHTS);
 				stmt.setInt(1, i);
-				stmt.setFloat(2, GameField.giraffeAverages.get(i));
+				stmt.setFloat(2, copiedAverages.get(i));
 				stmt.setInt(3, this.user_pk);
-				System.out.println(stmt);
 				stmt.executeUpdate();
 			}
 			System.out.println("Update Tree Result : ");
@@ -454,20 +517,48 @@ public class AliceDAO {
 		return false;
    	}
    	
-   	public void logout() {
+   	public boolean updateRank() {
    		dbConnect();
-   		updateUser();
-   		updateGiraffes();
-   		updateTrees();
-   		updateHeights();
    		try {
-			stmt = connection.prepareStatement(LOGOUT);
-			stmt.setInt(1, this.user_pk);
+			refreshStmt();
+			stmt = connection.prepareStatement(UPDATE_RANK);
+			stmt.setFloat(1, gameField.giraffeAverage);
+			stmt.setInt(2, (int) gameField.timeStamp);
+			stmt.setInt(3, this.user_pk);
 			stmt.executeUpdate();
+			System.out.println(stmt);
+			dbDisconnect();
+			return true;
 		} catch (SQLException e) {
-			System.out.println("SQL Exception logout : "+e);
+			System.out.println("SQL Exception updateRank : "+e);
 			e.printStackTrace();
 		}
    		dbDisconnect();
+		return false;
+   	}
+   	
+   	public boolean logout() {
+   		dbConnect();
+   		Vector<Giraffe> copiedGiraffes = new Vector<Giraffe>(GameField.giraffes);
+   		Vector<Tree> copiedTrees = new Vector<Tree>(GameField.trees);
+   		Vector<Float> copiedAverages = new Vector<Float>(GameField.giraffeAverages);
+   		boolean uu = updateUser();
+   		boolean ug = updateGiraffes(copiedGiraffes);
+   		boolean ut = updateTrees(copiedTrees);
+   		boolean uh = updateHeights(copiedAverages);
+   		if (uu && ug && ut && uh) {   			
+   			try {
+   				stmt = connection.prepareStatement(LOGOUT);
+   				stmt.setInt(1, this.user_pk);
+   				stmt.executeUpdate();
+   		   		dbDisconnect();
+   				return true;
+   			} catch (SQLException e) {
+   				System.out.println("SQL Exception logout : "+e);
+   				e.printStackTrace();
+   			}
+   		}
+   		dbDisconnect();
+   		return false;
    	}
 }
