@@ -74,7 +74,7 @@ public class GameMain extends JFrame{
 		
 		for (int i=0; i<GameField.giraffeAverages.size(); i++) {
 			Vector<String> tableRow = new Vector<String>();
-			tableRow.add(GameField.getTimeStampToString((i+1)*GameField.AverageTimeUnit));
+			tableRow.add(GameField.getTimeStampToString((i)*GameField.AverageTimeUnit));
 			tableRow.add(GameField.giraffeAverages.get(i).toString());
 			GameMain.giraffesHeightTableModel.addRow(tableRow);
 		}

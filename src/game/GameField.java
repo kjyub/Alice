@@ -61,6 +61,8 @@ public class GameField extends JPanel {
 			int x = (int) (Math.random()*FieldSize.width) + 1;
 			int y = (int) (Math.random()*(FieldSize.height - grf.getHeight())) + 1;
 			grf.setLocation(x, y);
+			this.maxGiraffeID++;
+			grf.id = this.maxGiraffeID;
 			this.add(grf);
 			grf.move();
 		}
@@ -68,8 +70,8 @@ public class GameField extends JPanel {
 	public void summon(ArrayList<GiraffeVO> grfs) {
 		for(GiraffeVO vo : grfs) {
 			Giraffe grf = new Giraffe(this,vo);
-			this.add(grf);
 			grf.move_force();
+			this.add(grf);
 		}
 		this.repaint();
 		this.updateAmount();
